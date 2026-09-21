@@ -49,14 +49,25 @@ try:
     from web_app.audio_processor import build_audio_ydl_options, clean_song_title
     from web_app.security_engine import get_hardware_id, verify_license_key, save_license, load_saved_license
     from web_app.updater_engine import check_for_updates, apply_silent_update, get_current_version
+    from web_app.prive_engine import (
+        is_prive_configured, setup_prive_password, verify_prive_password,
+        reset_prive_password, get_prive_download_folder, is_xvideos_url, sanitize_prive_title
+    )
 except ImportError:
     from spotify_engine import is_spotify_url, fetch_spotify_metadata
     from apple_music_engine import is_apple_music_url, fetch_apple_music_metadata
     from audio_processor import build_audio_ydl_options, clean_song_title
     from security_engine import get_hardware_id, verify_license_key, save_license, load_saved_license
     from updater_engine import check_for_updates, apply_silent_update, get_current_version
+    from prive_engine import (
+        is_prive_configured, setup_prive_password, verify_prive_password,
+        reset_prive_password, get_prive_download_folder, is_xvideos_url, sanitize_prive_title
+    )
 
 app = FastAPI(title="Nexo Download Pro - Mídia Digital Livre", version="2.1.0")
+
+# Estado volátil da Sessão Privê (desbloqueada em memória durante a sessão)
+prive_session_unlocked = False
 
 DOWNLOAD_EXECUTOR = concurrent.futures.ThreadPoolExecutor(
     max_workers=4,
@@ -159,6 +170,7 @@ class DownloadRequest(BaseModel):
     split_chapters: bool = False
     metadata: bool = True
     custom_folder: Optional[str] = None
+    is_prive: bool = False
 
 
 class OpenFolderRequest(BaseModel):
@@ -172,6 +184,63 @@ class LicenseActivateRequest(BaseModel):
 
 class UpdateFolderRequest(BaseModel):
     path: str
+
+
+class PrivePasswordRequest(BaseModel):
+    password: str
+
+
+# ==============================================================================
+# Endpoints da Sessão Privê (18+ / XVideos com Proteção de Senha)
+# ==============================================================================
+
+@app.get("/api/prive/status")
+async def get_prive_status():
+    """Retorna se a senha já foi configurada e se a sessão atual está desbloqueada."""
+    configured = is_prive_configured()
+    return {
+        "configured": configured,
+        "unlocked": prive_session_unlocked if configured else False
+    }
+
+@app.post("/api/prive/setup")
+async def setup_prive_endpoint(req: PrivePasswordRequest):
+    """Configura a senha mestra da Sessão Privê no primeiro uso ou redefinição."""
+    global prive_session_unlocked
+    pwd = req.password.strip()
+    if len(pwd) < 4:
+        return {"success": False, "message": "A senha deve conter no mínimo 4 caracteres."}
+    if setup_prive_password(pwd):
+        prive_session_unlocked = True
+        return {"success": True, "unlocked": True, "message": "Senha Privê configurada com sucesso!"}
+    return {"success": False, "message": "Erro ao gravar as credenciais privê."}
+
+@app.post("/api/prive/unlock")
+async def unlock_prive_endpoint(req: PrivePasswordRequest):
+    """Desbloqueia a Sessão Privê com validação de senha."""
+    global prive_session_unlocked
+    if not is_prive_configured():
+        return {"success": False, "message": "Sessão Privê ainda não configurada."}
+    if verify_prive_password(req.password):
+        prive_session_unlocked = True
+        return {"success": True, "unlocked": True, "message": "Sessão Privê desbloqueada com sucesso!"}
+    return {"success": False, "message": "Senha incorreta. Verifique e tente novamente."}
+
+@app.post("/api/prive/lock")
+async def lock_prive_endpoint():
+    """Tranca imediatamente a Sessão Privê."""
+    global prive_session_unlocked
+    prive_session_unlocked = False
+    return {"success": True, "unlocked": False, "message": "Sessão Privê trancada."}
+
+@app.post("/api/prive/reset")
+async def reset_prive_endpoint():
+    """Redefine as credenciais da Sessão Privê (Zero-Knowledge, sem tocar nos arquivos já salvos)."""
+    global prive_session_unlocked
+    prive_session_unlocked = False
+    if reset_prive_password():
+        return {"success": True, "message": "Credenciais da Sessão Privê redefinidas."}
+    return {"success": False, "message": "Erro ao redefinir credenciais."}
 
 
 # ==============================================================================
@@ -271,6 +340,8 @@ async def set_downloads_dir(req: UpdateFolderRequest):
 
 def detect_platform_name(url: str) -> str:
     url_l = url.lower()
+    if is_xvideos_url(url_l):
+        return "XVideos"
     if "spotify" in url_l:
         return "Spotify"
     if "music.apple.com" in url_l or "apple.co" in url_l or "itunes.apple.com" in url_l:
@@ -411,6 +482,34 @@ async def get_url_info(url: str = Query(...)):
                 "is_collection": apple_meta.get("is_collection", False),
                 "tracks_count": len(apple_meta.get("tracks", [])) if apple_meta.get("is_collection") else 1
             })
+    elif platform == "XVideos":
+        info_resp["is_prive"] = True
+        if not prive_session_unlocked:
+            info_resp.update({
+                "title": "Conteúdo Privê (XVideos)",
+                "artist": "Sessão Privê",
+                "thumbnail": "",
+                "requires_prive_unlock": True,
+                "is_locked": True
+            })
+        else:
+            try:
+                with yt_dlp.YoutubeDL({"quiet": True, "no_warnings": True}) as ydl:
+                    x_info = ydl.extract_info(clean_url, download=False)
+                    info_resp.update({
+                        "title": sanitize_prive_title(x_info.get("title", "Vídeo XVideos")),
+                        "artist": x_info.get("uploader", "XVideos"),
+                        "thumbnail": x_info.get("thumbnail", ""),
+                        "duration": x_info.get("duration", 0),
+                        "is_locked": False
+                    })
+            except Exception:
+                info_resp.update({
+                    "title": "Vídeo XVideos",
+                    "artist": "XVideos",
+                    "thumbnail": "",
+                    "is_locked": False
+                })
 
     return info_resp
 
@@ -420,6 +519,10 @@ async def start_download(req: DownloadRequest):
     url = req.url.strip()
     if not url or not (url.startswith("http://") or url.startswith("https://")):
         raise HTTPException(status_code=400, detail="URL inválida.")
+
+    is_prive = is_xvideos_url(url) or req.is_prive
+    if is_prive and not prive_session_unlocked:
+        raise HTTPException(status_code=403, detail="Sessão Privê bloqueada. Desbloqueie com sua senha para iniciar o download.")
 
     task_id = str(uuid.uuid4())
     main_loop = asyncio.get_running_loop()
@@ -435,10 +538,11 @@ async def start_download(req: DownloadRequest):
         req.split_chapters,
         req.metadata,
         req.custom_folder,
-        main_loop
+        main_loop,
+        is_prive
     )
 
-    return {"task_id": task_id, "status": "started", "platform": detect_platform_name(url)}
+    return {"task_id": task_id, "status": "started", "platform": detect_platform_name(url), "is_prive": is_prive}
 
 
 def run_download_task(
@@ -450,14 +554,19 @@ def run_download_task(
     split_chapters: bool = False,
     metadata: bool = True,
     custom_folder: Optional[str] = None,
-    main_loop: Optional[asyncio.AbstractEventLoop] = None
+    main_loop: Optional[asyncio.AbstractEventLoop] = None,
+    is_prive: bool = False
 ):
     global MAIN_LOOP, DOWNLOADS_DIR
     loop = main_loop or MAIN_LOOP
     platform = detect_platform_name(url)
     
     base_target = Path(custom_folder) if custom_folder and Path(custom_folder).exists() else DOWNLOADS_DIR
-    target_dir = base_target / platform
+    if is_xvideos_url(url) or is_prive:
+        target_dir = get_prive_download_folder(base_target)
+        platform = "XVideos" if is_xvideos_url(url) else platform
+    else:
+        target_dir = base_target / platform
     target_dir.mkdir(parents=True, exist_ok=True)
 
     ffmpeg_dir = find_ffmpeg_path()
@@ -468,6 +577,7 @@ def run_download_task(
     def send_update(payload: dict):
         if loop and loop.is_running():
             try:
+                payload["is_prive"] = bool(is_xvideos_url(url) or is_prive)
                 asyncio.run_coroutine_threadsafe(
                     progress_manager.broadcast_status(task_id, payload),
                     loop
@@ -753,16 +863,21 @@ async def websocket_progress(websocket: WebSocket, task_id: str):
 
 
 @app.get("/api/history")
-async def get_history():
+async def get_history(show_prive: bool = False):
     files_list = []
     if DOWNLOADS_DIR.exists():
         for file_path in DOWNLOADS_DIR.rglob("*.*"):
             if file_path.is_file() and not file_path.name.endswith(".part"):
+                is_file_prive = "Privê" in file_path.parts or "Prive" in file_path.parts
+                # Se for arquivo privê e a sessão estiver trancada, esconde do histórico
+                if is_file_prive and not (show_prive and prive_session_unlocked):
+                    continue
                 stat = file_path.stat()
-                platform = file_path.parent.name if file_path.parent != DOWNLOADS_DIR else "Geral"
+                platform = "XVideos" if is_file_prive else (file_path.parent.name if file_path.parent != DOWNLOADS_DIR else "Geral")
                 files_list.append({
                     "name": file_path.name,
                     "platform": platform,
+                    "is_prive": is_file_prive,
                     "size_mb": round(stat.st_size / (1024 * 1024), 2),
                     "modified": stat.st_mtime,
                     "ext": file_path.suffix.lower().replace(".", ""),

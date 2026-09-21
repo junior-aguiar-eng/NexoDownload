@@ -146,7 +146,7 @@ def step2_bundle_dependencies() -> bool:
         print(f"[+] Binário C (.pyd) acoplado: {pyd_file.name}")
         
     # Remove código fonte sensível (.py) das pastas de distribuição para blindagem total
-    protected_stems = ["security_engine", "spotify_engine", "apple_music_engine", "audio_processor", "updater_engine"]
+    protected_stems = ["security_engine", "prive_engine", "spotify_engine", "apple_music_engine", "audio_processor", "updater_engine"]
     for stem in protected_stems:
         for py_path in dist_dir.rglob(f"{stem}.py"):
             py_path.unlink(missing_ok=True)

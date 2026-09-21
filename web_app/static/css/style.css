@@ -1607,4 +1607,122 @@ body[data-theme="blue"] {
     text-align: center;
 }
 
+/* ==========================================================================
+   Sessão Privê (18+ / Conteúdo Adulto Protegido)
+   ========================================================================== */
+.prive-toggle-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 14px;
+    background: rgba(241, 245, 249, 0.9);
+    border: 1px solid var(--border-color);
+    border-radius: 9999px;
+    font-family: var(--font-heading);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.prive-toggle-pill:hover {
+    background: #ffffff;
+    border-color: #cbd5e1;
+    color: var(--text-main);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
+}
+
+.prive-toggle-pill.unlocked {
+    background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
+    border-color: #f43f5e;
+    color: #e11d48;
+    box-shadow: 0 2px 8px rgba(244, 63, 94, 0.2);
+}
+
+.prive-toggle-pill.unlocked:hover {
+    background: linear-gradient(135deg, #ffe4e6 0%, #fecdd3 100%);
+    border-color: #e11d48;
+}
+
+.prive-lock-icon {
+    font-size: 0.95rem;
+    line-height: 1;
+}
+
+.modal-card-prive {
+    max-width: 480px;
+}
+
+.prive-header-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.prive-badge-icon {
+    font-size: 1.3rem;
+}
+
+.prive-settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 8px;
+    padding: 12px 14px;
+    background: var(--surface-subtle);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+}
+
+.prive-status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.prive-status-badge.active {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.btn-ghost-sm {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-family: var(--font-body);
+    font-weight: 500;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    transition: background 0.15s ease;
+}
+
+.btn-ghost-sm:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.prive-badge-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    background: #ffe4e6;
+    color: #e11d48;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-left: 6px;
+}
+
+
 

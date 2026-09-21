@@ -29,9 +29,10 @@ UninstallIcon "..\web_app\static\icons\app_icon.ico"
 ; Remove completamente rodapé Nullsoft e linha divisória
 BrandingText " "
 
-; Oculta listagem técnica de arquivos
+; Oculta listagem técnica de arquivos e fecha automaticamente ao concluir
 ShowInstDetails nevershow
 ShowUninstDetails nevershow
+AutoCloseWindow true
 
 ; ============================================================================
 ; Página Única de Instalação Silenciosa com Barra Fluida
@@ -133,8 +134,9 @@ Section "InstalacaoNexo" SecInstall
     DetailPrint "Finalizando..."
     Sleep 400
 
-    ; Inicia automaticamente o aplicativo (Experiência 1-Clique Estilo Spotify/Discord)
+    ; Inicia automaticamente o aplicativo e fecha o instalador na hora
     Exec "$INSTDIR\${PRODUCT_EXE}"
+    Quit
 SectionEnd
 
 ; ============================================================================

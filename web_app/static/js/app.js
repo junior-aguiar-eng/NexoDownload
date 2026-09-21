@@ -516,6 +516,14 @@ document.addEventListener("DOMContentLoaded", () => {
             const data = await resp.json();
             if (data.valid) {
                 currentMetadata = data;
+                if (data.requires_prive_unlock) {
+                    showToast("Conteúdo Privê detectado. Desbloqueie com sua senha.");
+                    openPriveAuthModal(() => {
+                        analyzeUrl(url);
+                    });
+                    return;
+                }
+
                 let titleText = data.title || "Mídia Pronta para Download";
                 if (data.is_collection && data.tracks_count > 1) {
                     titleText += ` (${data.tracks_count} faixas + Álbum Completo)`;
@@ -563,17 +571,28 @@ document.addEventListener("DOMContentLoaded", () => {
     // 9. Disparo do Download e WebSocket em Tempo Real
     // =========================================================================
     async function triggerDownload(url) {
+        const isPriveUrl = (currentMetadata && currentMetadata.is_prive) || url.toLowerCase().includes("xvideos");
+        if (isPriveUrl && !isPriveUnlocked) {
+            showToast("Sessão Privê bloqueada. Desbloqueie para baixar.");
+            openPriveAuthModal(() => {
+                triggerDownload(url);
+            });
+            btnAnalyze.disabled = false;
+            return;
+        }
+
         showToast("Iniciando download...");
         btnAnalyze.disabled = true;
 
         const payload = {
             url: url,
             media_type: selFormat.value,
-            quality: parseInt(selQuality.value) || 1080,
-            audio_quality: parseInt(selAudioQuality.value) || 320,
+            quality: parseInt(selQuality.value, 10) || 1080,
+            audio_quality: parseInt(selAudioQuality.value, 10) || 320,
             split_chapters: false,
-            metadata: chkMetadata.checked,
-            custom_folder: inputFolderPath.value || null
+            metadata: chkMetadata ? chkMetadata.checked : true,
+            custom_folder: inputFolderPath.value || null,
+            is_prive: isPriveUrl
         };
 
         try {
@@ -732,6 +751,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const folderPath = data.folder_path || "";
         const ext = data.ext || (filePath.endsWith(".mp3") ? "mp3" : "mp4");
 
+        const isPriveItem = !!data.is_prive;
+        const priveTagHtml = isPriveItem ? '<span class="prive-badge-pill">Privê 18+</span>' : '';
+
         const card = document.createElement("div");
         card.className = "download-card completed-item";
         card.innerHTML = `
@@ -742,6 +764,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="download-header-line">
                     <h4 class="download-title" title="${escapeHtml(title)}">${escapeHtml(title)}</h4>
                     <span class="completed-platform-tag">${platform}</span>
+                    ${priveTagHtml}
                 </div>
                 <div class="download-meta-line">
                     <span class="completed-size">${sizeMb > 0 ? sizeMb + " MB" : ""}</span>
@@ -772,16 +795,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function loadCompletedHistory() {
         try {
-            const resp = await fetch("/api/history");
+            const resp = await fetch(`/api/history?show_prive=${isPriveUnlocked}`);
             const data = await resp.json();
+            completedDownloadsContainer.innerHTML = "";
+            completedDownloadsContainer.appendChild(emptyCompletedDownloads);
             if (data.files && data.files.length > 0) {
                 emptyCompletedDownloads.classList.add("hidden");
+                completedTasksCount = data.files.length;
                 data.files.forEach(f => {
                     addCompletedCard(f);
                 });
             } else {
+                completedTasksCount = 0;
                 emptyCompletedDownloads.classList.remove("hidden");
             }
+            updateCounts();
         } catch (e) {
             console.warn("Não foi possível carregar o histórico:", e);
         }
@@ -882,4 +910,244 @@ document.addEventListener("DOMContentLoaded", () => {
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
     }
+
+    // =========================================================================
+    // 12. Sessão Privê (18+ / Conteúdo Adulto Protegido por Senha)
+    // =========================================================================
+    let isPriveUnlocked = false;
+    let isPriveConfigured = false;
+    let privePendingCallback = null;
+
+    const btnPriveToggle = document.getElementById("btnPriveToggle");
+    const priveLockIcon = document.getElementById("priveLockIcon");
+    const priveToggleText = document.getElementById("priveToggleText");
+
+    const modalPriveSetup = document.getElementById("modalPriveSetup");
+    const btnClosePriveSetup = document.getElementById("btnClosePriveSetup");
+    const btnCancelPriveSetup = document.getElementById("btnCancelPriveSetup");
+    const btnSavePriveSetup = document.getElementById("btnSavePriveSetup");
+    const priveSetupPwd = document.getElementById("priveSetupPwd");
+    const priveSetupPwdConfirm = document.getElementById("priveSetupPwdConfirm");
+    const priveSetupError = document.getElementById("priveSetupError");
+
+    const modalPriveUnlock = document.getElementById("modalPriveUnlock");
+    const btnClosePriveUnlock = document.getElementById("btnClosePriveUnlock");
+    const btnCancelPriveUnlock = document.getElementById("btnCancelPriveUnlock");
+    const btnConfirmPriveUnlock = document.getElementById("btnConfirmPriveUnlock");
+    const btnForgotPrive = document.getElementById("btnForgotPrive");
+    const priveUnlockPwd = document.getElementById("priveUnlockPwd");
+    const priveUnlockError = document.getElementById("priveUnlockError");
+
+    const priveSettingsStatusBadge = document.getElementById("priveSettingsStatusBadge");
+    const btnResetPriveCredentials = document.getElementById("btnResetPriveCredentials");
+
+    async function checkPriveStatus() {
+        try {
+            const resp = await fetch("/api/prive/status");
+            const data = await resp.json();
+            isPriveConfigured = !!data.configured;
+            isPriveUnlocked = !!data.unlocked;
+            updatePriveUI();
+        } catch (e) {
+            console.warn("Erro ao checar status privê:", e);
+        }
+    }
+
+    function updatePriveUI() {
+        if (!btnPriveToggle) return;
+        if (isPriveUnlocked) {
+            btnPriveToggle.classList.add("unlocked");
+            priveLockIcon.textContent = "🔓";
+            priveToggleText.textContent = "Privê Ativo (Trancar)";
+            btnPriveToggle.title = "Sessão Privê Desbloqueada. Clique para trancar.";
+        } else {
+            btnPriveToggle.classList.remove("unlocked");
+            priveLockIcon.textContent = "🔒";
+            priveToggleText.textContent = "Privê";
+            btnPriveToggle.title = "Sessão Privê (Conteúdo Adulto Protegido por Senha)";
+        }
+
+        if (priveSettingsStatusBadge) {
+            if (isPriveConfigured) {
+                priveSettingsStatusBadge.textContent = "Senha Ativa";
+                priveSettingsStatusBadge.className = "prive-status-badge active";
+            } else {
+                priveSettingsStatusBadge.textContent = "Não Configurada";
+                priveSettingsStatusBadge.className = "prive-status-badge";
+            }
+        }
+    }
+
+    if (btnPriveToggle) {
+        btnPriveToggle.addEventListener("click", async () => {
+            if (isPriveUnlocked) {
+                try {
+                    await fetch("/api/prive/lock", { method: "POST" });
+                    isPriveUnlocked = false;
+                    updatePriveUI();
+                    loadCompletedHistory();
+                    showToast("Sessão Privê trancada com segurança.");
+                } catch (e) {
+                    showToast("Erro ao trancar sessão.");
+                }
+            } else {
+                openPriveAuthModal();
+            }
+        });
+    }
+
+    function openPriveAuthModal(onSuccess) {
+        privePendingCallback = onSuccess || null;
+        if (!isPriveConfigured) {
+            priveSetupPwd.value = "";
+            priveSetupPwdConfirm.value = "";
+            priveSetupError.classList.add("hidden");
+            modalPriveSetup.classList.remove("hidden");
+            priveSetupPwd.focus();
+        } else {
+            priveUnlockPwd.value = "";
+            priveUnlockError.classList.add("hidden");
+            modalPriveUnlock.classList.remove("hidden");
+            priveUnlockPwd.focus();
+        }
+    }
+
+    // Handlers do Modal de Setup
+    if (btnClosePriveSetup) btnClosePriveSetup.addEventListener("click", () => modalPriveSetup.classList.add("hidden"));
+    if (btnCancelPriveSetup) btnCancelPriveSetup.addEventListener("click", () => modalPriveSetup.classList.add("hidden"));
+
+    if (btnSavePriveSetup) {
+        btnSavePriveSetup.addEventListener("click", async () => {
+            const pwd = priveSetupPwd.value.trim();
+            const pwdConf = priveSetupPwdConfirm.value.trim();
+
+            if (pwd.length < 4) {
+                priveSetupError.textContent = "A senha deve conter no mínimo 4 caracteres.";
+                priveSetupError.classList.remove("hidden");
+                return;
+            }
+            if (pwd !== pwdConf) {
+                priveSetupError.textContent = "As senhas não coincidem. Digite novamente.";
+                priveSetupError.classList.remove("hidden");
+                return;
+            }
+
+            try {
+                const resp = await fetch("/api/prive/setup", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ password: pwd })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    isPriveConfigured = true;
+                    isPriveUnlocked = true;
+                    updatePriveUI();
+                    modalPriveSetup.classList.add("hidden");
+                    showToast("Senha cadastrada! Sessão Privê desbloqueada.");
+                    loadCompletedHistory();
+                    if (typeof privePendingCallback === "function") {
+                        privePendingCallback();
+                        privePendingCallback = null;
+                    }
+                } else {
+                    priveSetupError.textContent = data.message || "Erro ao salvar senha.";
+                    priveSetupError.classList.remove("hidden");
+                }
+            } catch (e) {
+                priveSetupError.textContent = "Erro ao conectar com o servidor.";
+                priveSetupError.classList.remove("hidden");
+            }
+        });
+    }
+
+    // Handlers do Modal de Unlock
+    if (btnClosePriveUnlock) btnClosePriveUnlock.addEventListener("click", () => modalPriveUnlock.classList.add("hidden"));
+    if (btnCancelPriveUnlock) btnCancelPriveUnlock.addEventListener("click", () => modalPriveUnlock.classList.add("hidden"));
+
+    if (btnConfirmPriveUnlock) {
+        btnConfirmPriveUnlock.addEventListener("click", async () => {
+            const pwd = priveUnlockPwd.value.trim();
+            if (!pwd) {
+                priveUnlockError.textContent = "Digite sua senha privê.";
+                priveUnlockError.classList.remove("hidden");
+                return;
+            }
+
+            try {
+                const resp = await fetch("/api/prive/unlock", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ password: pwd })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    isPriveUnlocked = true;
+                    updatePriveUI();
+                    modalPriveUnlock.classList.add("hidden");
+                    showToast("Sessão Privê desbloqueada com sucesso!");
+                    loadCompletedHistory();
+                    if (typeof privePendingCallback === "function") {
+                        privePendingCallback();
+                        privePendingCallback = null;
+                    }
+                } else {
+                    priveUnlockError.textContent = data.message || "Senha incorreta.";
+                    priveUnlockError.classList.remove("hidden");
+                }
+            } catch (e) {
+                priveUnlockError.textContent = "Erro ao validar senha.";
+                priveUnlockError.classList.remove("hidden");
+            }
+        });
+    }
+
+    if (priveUnlockPwd) {
+        priveUnlockPwd.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") btnConfirmPriveUnlock.click();
+        });
+    }
+    if (priveSetupPwdConfirm) {
+        priveSetupPwdConfirm.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") btnSavePriveSetup.click();
+        });
+    }
+
+    if (btnForgotPrive) {
+        btnForgotPrive.addEventListener("click", async () => {
+            if (confirm("Deseja redefinir sua senha da Sessão Privê?\\n\\n(Nota: Seus vídeos baixados no computador NÃO serão apagados).")) {
+                try {
+                    await fetch("/api/prive/reset", { method: "POST" });
+                    isPriveConfigured = false;
+                    isPriveUnlocked = false;
+                    updatePriveUI();
+                    modalPriveUnlock.classList.add("hidden");
+                    showToast("Credenciais Privê redefinidas. Agora você pode cadastrar uma nova senha.");
+                    openPriveAuthModal(privePendingCallback);
+                } catch (e) {
+                    showToast("Erro ao redefinir credenciais.");
+                }
+            }
+        });
+    }
+
+    if (btnResetPriveCredentials) {
+        btnResetPriveCredentials.addEventListener("click", async () => {
+            if (confirm("Tem certeza que deseja redefinir sua senha da Sessão Privê?\\n\\nIsso permitirá cadastrar uma nova senha. Os arquivos baixados no disco continuam intactos.")) {
+                try {
+                    await fetch("/api/prive/reset", { method: "POST" });
+                    isPriveConfigured = false;
+                    isPriveUnlocked = false;
+                    updatePriveUI();
+                    loadCompletedHistory();
+                    showToast("Senha da Sessão Privê redefinida com sucesso.");
+                } catch (e) {
+                    showToast("Erro ao redefinir senha privê.");
+                }
+            }
+        });
+    }
+
+    // Inicialização da Sessão Privê
+    checkPriveStatus();
 });

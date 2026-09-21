@@ -121,6 +121,10 @@
                     <p class="greeting-desc">Cole o link da mídia e baixe seus conteúdos favoritos de forma rápida e simples.</p>
                 </div>
                 <div class="top-actions">
+                    <button type="button" id="btnPriveToggle" class="prive-toggle-pill" title="Sessão Privê (18+ / Protegida por Senha)">
+                        <span class="prive-lock-icon" id="priveLockIcon">🔒</span>
+                        <span id="priveToggleText">Privê</span>
+                    </button>
                     <button type="button" id="btnUpdateNotice" class="update-notice-pill hidden" title="Nova versão disponível! Clique para ver novidades.">
                         <span class="update-pulse-dot"></span>
                         <span id="updatePillText">Nova Versão</span>
@@ -556,6 +560,14 @@
                         <code id="settingHwidCode" class="hwid-code">NEXO-....</code>
                     </div>
                 </div>
+                <div class="settings-section">
+                    <h4 class="settings-subtitle">Sessão Privê (18+ / Adulto)</h4>
+                    <p class="settings-help">Gerenciamento de credenciais e proteção dos downloads do XVideos.</p>
+                    <div class="prive-settings-row">
+                        <span id="priveSettingsStatusBadge" class="prive-status-badge">Carregando...</span>
+                        <button type="button" id="btnResetPriveCredentials" class="btn-danger-ghost">Redefinir / Limpar Senha Privê</button>
+                    </div>
+                </div>
             </div>
 
             <div class="modal-footer">
@@ -564,6 +576,62 @@
                     <button type="button" id="btnCancelSettings" class="btn-ghost">Cancelar</button>
                     <button type="button" id="btnSaveSettings" class="btn-primary">Salvar Alterações</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- MODAIS DA SESSÃO PRIVÊ (SETUP & UNLOCK)                           -->
+    <!-- ================================================================= -->
+    <div id="modalPriveSetup" class="modal-backdrop hidden">
+        <div class="modal-card modal-card-prive">
+            <div class="modal-header">
+                <div class="prive-header-badge">
+                    <span class="prive-badge-icon">🔒</span>
+                    <h3 class="modal-title">Configurar Sessão Privê</h3>
+                </div>
+                <button type="button" class="btn-close-modal" id="btnClosePriveSetup">✕</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-desc">Defina uma senha ou PIN exclusivo para proteger o acesso aos downloads adultos (XVideos) e manter suas mídias isoladas.</p>
+                <div class="setting-field">
+                    <label class="setting-label" for="priveSetupPwd">Nova Senha / PIN (mínimo 4 caracteres):</label>
+                    <input type="password" id="priveSetupPwd" class="setting-input" placeholder="Digite sua senha privê" autocomplete="new-password">
+                </div>
+                <div class="setting-field">
+                    <label class="setting-label" for="priveSetupPwdConfirm">Confirmar Senha:</label>
+                    <input type="password" id="priveSetupPwdConfirm" class="setting-input" placeholder="Repita a senha privê" autocomplete="new-password">
+                </div>
+                <div id="priveSetupError" class="license-error-msg hidden"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="btnCancelPriveSetup" class="btn-ghost">Cancelar</button>
+                <button type="button" id="btnSavePriveSetup" class="btn-primary">Criar Senha e Ativar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalPriveUnlock" class="modal-backdrop hidden">
+        <div class="modal-card modal-card-prive">
+            <div class="modal-header">
+                <div class="prive-header-badge">
+                    <span class="prive-badge-icon">🔒</span>
+                    <h3 class="modal-title">Desbloquear Sessão Privê</h3>
+                </div>
+                <button type="button" class="btn-close-modal" id="btnClosePriveUnlock">✕</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-desc">Digite sua senha para desbloquear os downloads de conteúdo adulto e visualizar o histórico protegido.</p>
+                <div class="setting-field">
+                    <label class="setting-label" for="priveUnlockPwd">Senha / PIN:</label>
+                    <input type="password" id="priveUnlockPwd" class="setting-input" placeholder="Digite sua senha privê" autocomplete="current-password">
+                </div>
+                <div id="priveUnlockError" class="license-error-msg hidden"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="btnForgotPrive" class="btn-ghost-sm" style="margin-right: auto; color: #94a3b8;">Esqueci a Senha</button>
+                <button type="button" id="btnCancelPriveUnlock" class="btn-ghost">Cancelar</button>
+                <button type="button" id="btnConfirmPriveUnlock" class="btn-primary">Desbloquear</button>
             </div>
         </div>
     </div>

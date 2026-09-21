@@ -23,6 +23,7 @@ if sys.platform == "win32":
 
 MODULES_TO_COMPILE = [
     BASE_DIR / "web_app" / "security_engine.py",
+    BASE_DIR / "web_app" / "prive_engine.py",
     BASE_DIR / "web_app" / "spotify_engine.py",
     BASE_DIR / "web_app" / "apple_music_engine.py",
     BASE_DIR / "web_app" / "audio_processor.py",
