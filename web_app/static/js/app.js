@@ -32,7 +32,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const selVideoAudio = document.getElementById("selVideoAudio");
     const inputFolderPath = document.getElementById("inputFolderPath");
     const btnBrowseFolder = document.getElementById("btnBrowseFolder");
+    const btnSelectFolderInline = document.getElementById("btnSelectFolderInline");
     const chkMetadata = document.getElementById("chkMetadata");
+    const chkSplitChapters = document.getElementById("chkSplitChapters");
     const optQualityWrap = document.getElementById("optQualityWrap");
     const optVideoAudioWrap = document.getElementById("optVideoAudioWrap");
 
@@ -359,6 +361,30 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    if (btnSelectFolderInline) {
+        btnSelectFolderInline.addEventListener("click", async () => {
+            btnSelectFolderInline.disabled = true;
+            try {
+                const resp = await fetch("/api/select-folder", { method: "POST" });
+                const data = await resp.json();
+                if (data.success && data.path) {
+                    inputFolderPath.value = data.path;
+                    if (settingFolderPath) settingFolderPath.value = data.path;
+                    await fetch("/api/set-downloads-dir", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ path: data.path })
+                    });
+                    showToast("Pasta alterada: " + data.path);
+                }
+            } catch (e) {
+                showToast("Erro ao abrir seletor de pastas");
+            } finally {
+                btnSelectFolderInline.disabled = false;
+            }
+        });
+    }
+
     if (btnOpenDefaultFolder) {
         btnOpenDefaultFolder.addEventListener("click", () => {
             openFolder(settingFolderPath.value || inputFolderPath.value);
@@ -589,7 +615,8 @@ document.addEventListener("DOMContentLoaded", () => {
             media_type: selFormat.value,
             quality: parseInt(selQuality.value, 10) || 1080,
             audio_quality: parseInt(selAudioQuality.value, 10) || 320,
-            split_chapters: false,
+            video_audio: selVideoAudio ? selVideoAudio.value : "with_audio",
+            split_chapters: chkSplitChapters ? chkSplitChapters.checked : false,
             metadata: chkMetadata ? chkMetadata.checked : true,
             custom_folder: inputFolderPath.value || null,
             is_prive: isPriveUrl
@@ -630,27 +657,39 @@ document.addEventListener("DOMContentLoaded", () => {
     function connectWebSocket(taskId) {
         const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
         const wsUrl = `${protocol}//${window.location.host}/ws/progress/${taskId}`;
-        const ws = new WebSocket(wsUrl);
+        let retryCount = 0;
+        const maxRetries = 3;
 
-        ws.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                updateActiveCard(taskId, data);
+        function initWs() {
+            const ws = new WebSocket(wsUrl);
 
-                if (data.status === "finished" || data.status === "error") {
-                    ws.close();
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    updateActiveCard(taskId, data);
+
+                    if (data.status === "finished" || data.status === "error") {
+                        ws.close();
+                    }
+                } catch (e) {
+                    console.error("Erro no processamento do WebSocket:", e);
                 }
-            } catch (e) {
-                console.error("Erro no processamento do WebSocket:", e);
-            }
-        };
+            };
 
-        ws.onerror = () => {
-            updateActiveCard(taskId, {
-                status: "error",
-                message: "Falha na conexão de progresso em tempo real."
-            });
-        };
+            ws.onerror = () => {
+                if (retryCount < maxRetries) {
+                    retryCount++;
+                    setTimeout(initWs, 1200);
+                } else {
+                    updateActiveCard(taskId, {
+                        status: "error",
+                        message: "Falha na conexão de progresso em tempo real."
+                    });
+                }
+            };
+        }
+
+        initWs();
     }
 
     function createActiveDownloadCard(taskId, title, platform, thumbUrl) {
@@ -875,9 +914,10 @@ document.addEventListener("DOMContentLoaded", () => {
         item.addEventListener("click", () => {
             navItems.forEach(n => n.classList.remove("active"));
             item.classList.add("active");
-            const view = item.dataset.view;
-
-            if (view === "downloads") {
+            if (view === "inicio") {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+                if (urlInput) urlInput.focus();
+            } else if (view === "downloads") {
                 document.getElementById("sectionActiveDownloads").scrollIntoView({ behavior: "smooth" });
             } else if (view === "historico") {
                 document.getElementById("sectionCompletedDownloads").scrollIntoView({ behavior: "smooth" });

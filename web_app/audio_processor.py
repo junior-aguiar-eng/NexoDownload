@@ -77,12 +77,13 @@ def build_audio_ydl_options(
     target_dir: Path,
     audio_quality: int = 320,
     split_chapters: bool = False,
-    embed_thumbnail: bool = True
+    embed_thumbnail: bool = True,
+    ffmpeg_location: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Constrói as configurações otimizadas do yt-dlp para extração pura de áudio de estúdio.
     """
-    has_ffmpeg = shutil.which("ffmpeg") is not None
+    has_ffmpeg = (ffmpeg_location and Path(ffmpeg_location).exists()) or (shutil.which("ffmpeg") is not None)
     
     # Formato e qualidade
     # 320kbps ou 192kbps -> MP3 (LAME)
@@ -128,5 +129,8 @@ def build_audio_ydl_options(
         "postprocessors": postprocessors,
         "writethumbnail": embed_thumbnail and has_ffmpeg,
     }
+
+    if ffmpeg_location:
+        opts["ffmpeg_location"] = ffmpeg_location
 
     return opts

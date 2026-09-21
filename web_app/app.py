@@ -168,6 +168,7 @@ class DownloadRequest(BaseModel):
     media_type: str = "video"  # "video" ou "audio"
     quality: int = 1080
     audio_quality: int = 320
+    video_audio: str = "with_audio"  # "with_audio" ou "mute"
     split_chapters: bool = False
     metadata: bool = True
     custom_folder: Optional[str] = None
@@ -369,13 +370,31 @@ def detect_platform_name(url: str) -> str:
 def normalize_target_url(url: str) -> str:
     """
     Normaliza URLs com peculiaridades conhecidas no yt-dlp.
-    Para Vimeo: Transforma https://vimeo.com/{id} em https://player.vimeo.com/video/{id}
-    para permitir extração e download direto sem exigir login ou cookies.
+    - Para Vimeo: Transforma https://vimeo.com/{id} em https://player.vimeo.com/video/{id}
+      para permitir extração e download direto sem exigir login ou cookies.
+    - Para URLs encurtadas (pin.it, spotify.link, vt.tiktok.com, vm.tiktok.com, fb.watch):
+      Segue o redirecionamento HTTP para obter a URL canônica com os IDs reais.
     """
     url_clean = url.strip()
+
+    # Redirecionamentos de links curtos conhecidos
+    short_domains = ["pin.it", "spotify.link", "vt.tiktok.com", "vm.tiktok.com", "fb.watch"]
+    if any(sd in url_clean.lower() for sd in short_domains):
+        try:
+            import urllib.request
+            req = urllib.request.Request(
+                url_clean,
+                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"}
+            )
+            with urllib.request.urlopen(req, timeout=5.0) as resp:
+                url_clean = resp.geturl()
+        except Exception:
+            pass
+
     m_vimeo = re.search(r'vimeo\.com/(?:.*?/)?(\d+)', url_clean)
     if m_vimeo and "player.vimeo.com" not in url_clean:
         return f"https://player.vimeo.com/video/{m_vimeo.group(1)}"
+
     return url_clean
 
 
@@ -568,6 +587,7 @@ async def start_download(req: DownloadRequest):
         req.media_type,
         req.quality,
         req.audio_quality,
+        req.video_audio,
         req.split_chapters,
         req.metadata,
         req.custom_folder,
@@ -584,6 +604,7 @@ def run_download_task(
     media_type: str,
     quality: int,
     audio_quality: int = 320,
+    video_audio: str = "with_audio",
     split_chapters: bool = False,
     metadata: bool = True,
     custom_folder: Optional[str] = None,
@@ -780,6 +801,13 @@ def run_download_task(
         "quiet": False,
         "no_warnings": False,
         "progress_hooks": [ytdl_hook],
+        "retries": 3,
+        "fragment_retries": 5,
+        "http_headers": {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
+        }
     }
 
     if ffmpeg_dir:
@@ -790,7 +818,8 @@ def run_download_task(
             target_dir=target_dir,
             audio_quality=audio_quality,
             split_chapters=split_chapters,
-            embed_thumbnail=True
+            embed_thumbnail=True,
+            ffmpeg_location=ffmpeg_dir
         )
         if audio_opts:
             ydl_opts.update(audio_opts)
@@ -805,18 +834,26 @@ def run_download_task(
                 }]
             })
     else:
-        # Vídeo MP4 com metadados e thumbnail embutidos nativamente
-        video_format = (
-            f"bestvideo[ext=mp4][height<={quality}]+bestaudio[ext=m4a]/"
-            f"bestvideo[height<={quality}]+bestaudio/"
-            f"bestvideo+bestaudio/"
-            f"best[height<={quality}]/"
-            f"best"
-        )
+        # Vídeo: Com áudio vs Vídeo Mudo (Sem áudio)
+        is_mute = (video_audio == "mute")
+        if is_mute:
+            video_format = (
+                f"bestvideo[ext=mp4][height<={quality}]/"
+                f"bestvideo[height<={quality}]/"
+                f"bestvideo"
+            )
+        else:
+            video_format = (
+                f"bestvideo[ext=mp4][height<={quality}]+bestaudio[ext=m4a]/"
+                f"bestvideo[height<={quality}]+bestaudio/"
+                f"bestvideo+bestaudio/"
+                f"best[height<={quality}]/"
+                f"best"
+            )
         ydl_opts.update({
             "format": video_format,
             "outtmpl": str(target_dir / "%(title)s.%(ext)s"),
-            "merge_output_format": "mp4"
+            "merge_output_format": None if is_mute else "mp4"
         })
         
         if metadata:
@@ -846,6 +883,18 @@ def run_download_task(
                 if saved_path.with_suffix(ext).exists():
                     saved_path = saved_path.with_suffix(ext)
                     break
+
+        # Fallback inteligente: se o nome exato divergiu no pós-processamento, busca o arquivo mais recente gerado no target_dir
+        if not saved_path.exists():
+            recent_candidates = [
+                f for f in target_dir.iterdir()
+                if f.is_file() and not f.name.endswith(".part") and not f.name.endswith(".ytdl") and not f.name.startswith("_concat_")
+            ]
+            if recent_candidates:
+                recent_candidates.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+                newest = recent_candidates[0]
+                if (time.time() - newest.stat().st_mtime) < 90:
+                    saved_path = newest
 
         if saved_path.exists():
             if music_meta and music_meta.get("full_title"):

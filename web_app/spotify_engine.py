@@ -22,12 +22,30 @@ def is_spotify_url(url: str) -> bool:
 
 
 def parse_spotify_url(url: str) -> Dict[str, str]:
-    """Identifica o tipo de recurso do Spotify (track, album, playlist) e o ID."""
-    match = re.search(r'spotify\.com/(track|album|playlist)/([a-zA-Z0-9]+)', url)
+    """Identifica o tipo de recurso do Spotify (track, album, playlist) e o ID, com suporte a links regionais e encurtados."""
+    if not url:
+        return {"type": "unknown", "id": ""}
+
+    clean_url = url.strip()
+
+    # Se for link encurtado do tipo spotify.link, resolve o redirecionamento
+    if "spotify.link" in clean_url:
+        try:
+            req = urllib.request.Request(
+                clean_url,
+                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+            )
+            with urllib.request.urlopen(req, timeout=5.0) as resp:
+                clean_url = resp.geturl()
+        except Exception:
+            pass
+
+    # Suporta links comuns e links com prefixo regional (ex: /intl-pt/, /intl-es/, /intl-de/)
+    match = re.search(r'spotify\.com/(?:intl-[a-z]{2}/)?(track|album|playlist)/([a-zA-Z0-9]+)', clean_url)
     if match:
         return {"type": match.group(1), "id": match.group(2)}
     
-    uri_match = re.search(r'spotify:(track|album|playlist):([a-zA-Z0-9]+)', url)
+    uri_match = re.search(r'spotify:(track|album|playlist):([a-zA-Z0-9]+)', clean_url)
     if uri_match:
         return {"type": uri_match.group(1), "id": uri_match.group(2)}
 
