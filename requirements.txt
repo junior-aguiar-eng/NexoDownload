@@ -1,0 +1,7 @@
+# Dependências do YouTube Study Intelligence
+youtube-transcript-api>=1.2.4
+yt-dlp>=2026.8.0
+requests>=2.30.0
+rich>=13.0.0
+faster-whisper>=1.2.0
+google-genai>=2.20.0

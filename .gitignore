@@ -1,0 +1,47 @@
+# ==============================================================================
+# Git Ignore - Nexo Download Pro (Exclusivo do Aplicativo Desktop)
+# ==============================================================================
+
+# Executáveis grandes e diretórios de build
+dist/
+build/
+bin/*.exe
+tools/**/ffmpeg.exe
+tools/**/ffprobe.exe
+
+# Binários C gerados localmente e intermediários de compilação
+*.pyd
+*.obj
+*.lib
+*.exp
+*.c
+
+# Cache Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.spec.bak
+
+# Perfil temporário do WebView2 e logs
+.app_profile/
+*.log
+*.tmp
+
+# Downloads do usuário
+downloads/
+
+# Arquivos herdados / outros projetos (não fazem parte do Nexo Download App)
+chrome_extension/
+transcricoes/
+youtube_engine/
+baixar.py
+resumidor.py
+exemplos_videos.txt
+GUIA_RAPIDO_AMIGO.md
+INICIAR_SERVIDOR_ESTUDOS.bat
+
+# IDE e sistema operacional
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
