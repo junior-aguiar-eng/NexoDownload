@@ -738,8 +738,16 @@ input:checked + .slider:before {
     gap: 10px;
 }
 
-/* Card de Download em Andamento */
-.download-item-card {
+/* ==========================================================================
+   Lista de Downloads (Ativos e Concluídos)
+   ========================================================================== */
+.downloads-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.download-card {
     background: #ffffff;
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
@@ -748,21 +756,107 @@ input:checked + .slider:before {
     align-items: center;
     gap: 16px;
     box-shadow: var(--shadow-sm);
-    transition: border-color 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
 }
 
-.download-thumb {
-    width: 68px;
-    height: 50px;
+.download-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+/* 1. Miniatura e Tag no Card Ativo */
+.download-thumb-wrap {
+    width: 96px;
+    height: 60px;
+    min-width: 96px;
+    max-width: 96px;
+    max-height: 60px;
     border-radius: var(--radius-sm);
-    object-fit: cover;
-    background: #e2e8f0;
+    overflow: hidden;
+    position: relative;
+    background: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
 }
 
-.download-info-wrap {
-    width: 280px;
+.download-thumb-img {
+    width: 100%;
+    height: 100%;
+    max-width: 96px;
+    max-height: 60px;
+    object-fit: cover;
+    display: block;
+}
+
+.download-thumb-img[src*="app_icon"] {
+    object-fit: contain;
+    padding: 8px;
+}
+
+.download-platform-tag {
+    position: absolute;
+    bottom: 3px;
+    right: 3px;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(4px);
+    color: #ffffff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+/* 2. Ícone de Extensão no Card Concluído */
+.completed-icon-box {
+    width: 52px;
+    height: 52px;
+    min-width: 52px;
+    max-width: 52px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-heading);
+    font-size: 0.80rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
     flex-shrink: 0;
+}
+
+.completed-icon-box.ext-mp4 {
+    background: #e0f2fe;
+    color: #0284c7;
+    border: 1px solid #bae6fd;
+}
+
+.completed-icon-box.ext-mp3 {
+    background: #fef3c7;
+    color: #d97706;
+    border: 1px solid #fde68a;
+}
+
+/* 3. Detalhes e Cabeçalho do Card */
+.download-details {
+    flex-grow: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.download-header-line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
 }
 
 .download-title {
@@ -773,29 +867,73 @@ input:checked + .slider:before {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    flex-grow: 1;
+    min-width: 0;
 }
 
-.download-tags {
-    font-size: 0.75rem;
+.completed-platform-tag {
+    background: #f1f5f9;
     color: var(--text-muted);
-    margin-top: 2px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
-.download-progress-wrap {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+.prive-badge-pill {
+    background: #ffe4e6;
+    color: #e11d48;
+    font-size: 0.70rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: var(--radius-full);
+    border: 1px solid #fecdd3;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
-.progress-bar-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+/* 4. Badges de Status do Card Ativo */
+.download-status-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
-.progress-track {
-    flex-grow: 1;
+.status-starting {
+    background: #f1f5f9;
+    color: var(--text-muted);
+}
+
+.status-downloading {
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+.status-converting {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.status-finished {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.status-error {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+/* 5. Barra de Progresso */
+.progress-bar-bg {
+    width: 100%;
     height: 7px;
     background: #e2e8f0;
     border-radius: var(--radius-full);
@@ -810,86 +948,101 @@ input:checked + .slider:before {
     transition: width 0.25s ease-out;
 }
 
-.progress-percentage {
-    font-family: var(--font-heading);
-    font-size: 0.82rem;
-    font-weight: 700;
-    color: var(--text-main);
-    width: 40px;
-    text-align: right;
-}
-
-.download-stats-text {
+/* 6. Linha de Metadados e Estatísticas */
+.download-meta-line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     font-size: 0.75rem;
     color: var(--text-muted);
+    min-width: 0;
+    gap: 12px;
+}
+
+.download-status-msg {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-width: 0;
+    flex-grow: 1;
 }
 
-.download-actions {
+.download-stats {
     display: flex;
     align-items: center;
     gap: 6px;
-}
-
-.btn-action-round {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: 1px solid var(--border-subtle);
-    background: #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: var(--text-muted);
-    transition: all 0.2s ease;
-}
-
-.btn-action-round:hover {
-    background: #f1f5f9;
-    color: var(--text-main);
-    border-color: #cbd5e1;
-}
-
-/* Card de Download Concluído */
-.completed-item-card {
-    background: #ffffff;
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-lg);
-    padding: 12px 18px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    box-shadow: var(--shadow-sm);
-    transition: all 0.2s ease;
-}
-
-.completed-item-card:hover {
-    border-color: #cbd5e1;
-}
-
-.completed-badge-pill {
-    background: var(--primary-light);
-    color: var(--primary);
-    font-size: 0.75rem;
-    font-weight: 700;
-    padding: 4px 12px;
-    border-radius: var(--radius-full);
+    font-family: var(--font-mono);
+    font-size: 0.73rem;
     white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.stats-sep {
+    color: var(--text-light);
+}
+
+.completed-size {
+    font-weight: 600;
+    color: var(--text-main);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
 }
 
 .completed-meta-text {
-    font-size: 0.78rem;
     color: var(--text-muted);
-    white-space: nowrap;
-    margin-left: auto;
-    margin-right: 12px;
+    font-size: 0.75rem;
+}
+
+/* 7. Botões de Ação do Card Concluído */
+.completed-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 12px;
+    flex-shrink: 0;
+}
+
+.btn-action-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+    background: #f8fafc;
+    color: var(--text-main);
+    font-size: 0.80rem;
+    font-weight: 600;
+    font-family: var(--font-body);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    outline: none;
+}
+
+.btn-action-ghost:hover {
+    background: #ffffff;
+    border-color: #cbd5e1;
+    color: var(--primary);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-action-ghost:active {
+    transform: translateY(0);
+}
+
+.btn-action-ghost svg {
+    stroke: currentColor;
+    flex-shrink: 0;
+}
+
+.btn-open-folder {
+    padding: 7px 10px;
 }
 
 .empty-state {
-    padding: 24px;
+    padding: 28px 20px;
     background: #ffffff;
     border: 1px dashed var(--border-subtle);
     border-radius: var(--radius-lg);

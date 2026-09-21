@@ -9,6 +9,7 @@ seletor nativo de pastas do Windows e sistema de licenciamento HWID criptográfi
 
 import os
 import sys
+import re
 import glob
 import uuid
 import shutil
@@ -365,6 +366,19 @@ def detect_platform_name(url: str) -> str:
     return "Geral"
 
 
+def normalize_target_url(url: str) -> str:
+    """
+    Normaliza URLs com peculiaridades conhecidas no yt-dlp.
+    Para Vimeo: Transforma https://vimeo.com/{id} em https://player.vimeo.com/video/{id}
+    para permitir extração e download direto sem exigir login ou cookies.
+    """
+    url_clean = url.strip()
+    m_vimeo = re.search(r'vimeo\.com/(?:.*?/)?(\d+)', url_clean)
+    if m_vimeo and "player.vimeo.com" not in url_clean:
+        return f"https://player.vimeo.com/video/{m_vimeo.group(1)}"
+    return url_clean
+
+
 def find_ffmpeg_path() -> Optional[str]:
     """Descobre o executável ou pasta do FFmpeg no sistema ou no pacote."""
     candidates = []
@@ -453,7 +467,7 @@ async def serve_index():
 
 @app.get("/api/info")
 async def get_url_info(url: str = Query(...)):
-    clean_url = url.strip()
+    clean_url = normalize_target_url(url.strip())
     if not clean_url or not (clean_url.startswith("http://") or clean_url.startswith("https://")):
         return {"valid": False, "platform": "Desconhecido"}
 
@@ -510,13 +524,32 @@ async def get_url_info(url: str = Query(...)):
                     "thumbnail": "",
                     "is_locked": False
                 })
+    else:
+        # Plataformas de vídeo em geral (YouTube, Vimeo, TikTok, Instagram, Twitter, etc.)
+        try:
+            with yt_dlp.YoutubeDL({
+                "quiet": True,
+                "no_warnings": True,
+                "skip_download": True,
+                "socket_timeout": 6
+            }) as ydl:
+                v_meta = ydl.extract_info(clean_url, download=False)
+                if v_meta:
+                    info_resp.update({
+                        "title": v_meta.get("title", ""),
+                        "artist": v_meta.get("uploader", "") or v_meta.get("channel", ""),
+                        "thumbnail": v_meta.get("thumbnail", ""),
+                        "duration": v_meta.get("duration", 0)
+                    })
+        except Exception:
+            pass
 
     return info_resp
 
 
 @app.post("/api/download")
 async def start_download(req: DownloadRequest):
-    url = req.url.strip()
+    url = normalize_target_url(req.url.strip())
     if not url or not (url.startswith("http://") or url.startswith("https://")):
         raise HTTPException(status_code=400, detail="URL inválida.")
 
@@ -558,6 +591,7 @@ def run_download_task(
     is_prive: bool = False
 ):
     global MAIN_LOOP, DOWNLOADS_DIR
+    url = normalize_target_url(url)
     loop = main_loop or MAIN_LOOP
     platform = detect_platform_name(url)
     
