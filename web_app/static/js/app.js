@@ -472,6 +472,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (u.includes("apple.com") || u.includes("music.apple.com")) return "AppleMusic";
         if (u.includes("discord.com") || u.includes("discordapp.com")) return "Discord";
         if (u.includes("vimeo.com")) return "Vimeo";
+        if (u.includes("soundcloud.com") || u.includes("snd.sc")) return "SoundCloud";
         return null;
     }
 
@@ -504,7 +505,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const plat = detectPlatform(val);
         highlightPlatformCard(plat);
 
-        if (plat === "Spotify" || plat === "AppleMusic") {
+        if (plat === "Spotify" || plat === "AppleMusic" || plat === "SoundCloud") {
             selFormat.value = "audio";
             toggleFormatOptions();
         }

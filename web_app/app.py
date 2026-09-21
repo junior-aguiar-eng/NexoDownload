@@ -362,6 +362,8 @@ def detect_platform_name(url: str) -> str:
         return "Facebook"
     if "twitch" in url_l:
         return "Twitch"
+    if "soundcloud" in url_l or "snd.sc" in url_l:
+        return "SoundCloud"
     if "vimeo" in url_l:
         return "Vimeo"
     return "Geral"
@@ -372,13 +374,13 @@ def normalize_target_url(url: str) -> str:
     Normaliza URLs com peculiaridades conhecidas no yt-dlp.
     - Para Vimeo: Transforma https://vimeo.com/{id} em https://player.vimeo.com/video/{id}
       para permitir extração e download direto sem exigir login ou cookies.
-    - Para URLs encurtadas (pin.it, spotify.link, vt.tiktok.com, vm.tiktok.com, fb.watch):
+    - Para URLs encurtadas (pin.it, spotify.link, vt.tiktok.com, vm.tiktok.com, on.soundcloud.com, snd.sc, fb.watch):
       Segue o redirecionamento HTTP para obter a URL canônica com os IDs reais.
     """
     url_clean = url.strip()
 
     # Redirecionamentos de links curtos conhecidos
-    short_domains = ["pin.it", "spotify.link", "vt.tiktok.com", "vm.tiktok.com", "fb.watch"]
+    short_domains = ["pin.it", "spotify.link", "vt.tiktok.com", "vm.tiktok.com", "fb.watch", "on.soundcloud.com", "snd.sc"]
     if any(sd in url_clean.lower() for sd in short_domains):
         try:
             import urllib.request
@@ -615,6 +617,9 @@ def run_download_task(
     url = normalize_target_url(url)
     loop = main_loop or MAIN_LOOP
     platform = detect_platform_name(url)
+    if platform == "SoundCloud":
+        # SoundCloud é uma plataforma estritamente de áudio
+        media_type = "audio"
     
     base_target = Path(custom_folder) if custom_folder and Path(custom_folder).exists() else DOWNLOADS_DIR
     if is_xvideos_url(url) or is_prive:
