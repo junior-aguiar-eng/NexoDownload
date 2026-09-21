@@ -197,7 +197,10 @@ def step3_compile_nsis_installer() -> bool:
     nsi_script = BASE_DIR / "installer" / "installer.nsi"
     print(f"[+] Compilando {nsi_script} com {makensis_exe}...")
     
-    res = subprocess.run([str(makensis_exe), str(nsi_script)], cwd=str(BASE_DIR / "installer"))
+    res = subprocess.run(
+        [str(makensis_exe), "/INPUTCHARSET", "UTF8", str(nsi_script)],
+        cwd=str(BASE_DIR / "installer")
+    )
     if res.returncode != 0:
         print("[-] Erro durante a compilação do instalador NSIS.")
         return False
