@@ -59,6 +59,7 @@ def _get_wmi_value(command: str) -> str:
     return ""
 
 _CACHED_HWID = None
+_CACHED_FINGERPRINTS = None
 
 def get_hwid_file_path() -> Path:
     """Retorna o caminho do arquivo de persistência de identidade da máquina."""
@@ -72,8 +73,12 @@ def _compute_hwid_from_raw(raw: str) -> str:
 def _get_machine_fingerprints() -> list:
     """
     Extrai as variações legítimas de identificadores de hardware desta máquina.
-    Evita flutuações se algum serviço de WMI/PowerShell sofrer lentidão esporádica.
+    Usa cache em memória para evitar chamadas de processo repetitivas no WMI/PowerShell.
     """
+    global _CACHED_FINGERPRINTS
+    if _CACHED_FINGERPRINTS is not None:
+        return _CACHED_FINGERPRINTS
+
     guid = _get_registry_machine_guid()
     mb = _get_wmi_value("(Get-CimInstance Win32_ComputerSystemProduct).UUID")
     cpu = _get_wmi_value("(Get-CimInstance Win32_Processor).ProcessorId")
@@ -97,7 +102,8 @@ def _get_machine_fingerprints() -> list:
         fallback = os.environ.get("COMPUTERNAME", "NEXO_GENERIC_HOST")
         fps.append(_compute_hwid_from_raw(fallback))
 
-    return fps
+    _CACHED_FINGERPRINTS = fps
+    return _CACHED_FINGERPRINTS
 
 def get_hardware_id() -> str:
     """

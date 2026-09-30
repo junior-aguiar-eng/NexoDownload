@@ -16,11 +16,13 @@ tools/**/ffprobe.exe
 *.exp
 *.c
 
-# Cache Python
+# Cache Python & Testes
 __pycache__/
 *.py[cod]
 *$py.class
 *.spec.bak
+.pytest_cache/
+.pytest_temp/
 
 # Perfil temporário do WebView2 e logs
 .app_profile/

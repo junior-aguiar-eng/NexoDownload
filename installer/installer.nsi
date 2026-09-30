@@ -160,6 +160,7 @@ Section "Uninstall"
     Delete "$INSTDIR\app_icon.ico"
     RMDir /r "$INSTDIR\_internal"
     RMDir /r "$INSTDIR\bin"
+    RMDir /r "$INSTDIR\web_app"
 
     ; Tenta remover pasta raiz apenas se estiver vazia (downloads/ preservados)
     RMDir "$INSTDIR"

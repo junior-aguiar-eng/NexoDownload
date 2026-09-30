@@ -18,6 +18,7 @@ import threading
 import subprocess
 import concurrent.futures
 import time
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 
@@ -30,10 +31,11 @@ if sys.platform == "win32":
         pass
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Query, BackgroundTasks
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Query, BackgroundTasks, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel
 import yt_dlp
 
@@ -49,7 +51,7 @@ try:
     from web_app.apple_music_engine import is_apple_music_url, fetch_apple_music_metadata
     from web_app.audio_processor import build_audio_ydl_options, clean_song_title
     from web_app.security_engine import get_hardware_id, verify_license_key, save_license, load_saved_license
-    from web_app.updater_engine import check_for_updates, apply_silent_update, get_current_version
+    from web_app.updater_engine import check_for_updates, apply_silent_update, get_current_version, is_trusted_update_url
     from web_app.prive_engine import (
         is_prive_configured, setup_prive_password, verify_prive_password,
         reset_prive_password, get_prive_download_folder, is_xvideos_url, sanitize_prive_title
@@ -59,13 +61,21 @@ except ImportError:
     from apple_music_engine import is_apple_music_url, fetch_apple_music_metadata
     from audio_processor import build_audio_ydl_options, clean_song_title
     from security_engine import get_hardware_id, verify_license_key, save_license, load_saved_license
-    from updater_engine import check_for_updates, apply_silent_update, get_current_version
+    from updater_engine import check_for_updates, apply_silent_update, get_current_version, is_trusted_update_url
     from prive_engine import (
         is_prive_configured, setup_prive_password, verify_prive_password,
         reset_prive_password, get_prive_download_folder, is_xvideos_url, sanitize_prive_title
     )
 
-app = FastAPI(title="Nexo Download Pro - Mídia Digital Livre", version="2.1.0")
+MAIN_LOOP: Optional[asyncio.AbstractEventLoop] = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global MAIN_LOOP
+    MAIN_LOOP = asyncio.get_running_loop()
+    yield
+
+app = FastAPI(title="Nexo Download Pro - Mídia Digital Livre", version="2.1.0", lifespan=lifespan)
 
 # Estado volátil da Sessão Privê (desbloqueada em memória durante a sessão)
 prive_session_unlocked = False
@@ -74,13 +84,6 @@ DOWNLOAD_EXECUTOR = concurrent.futures.ThreadPoolExecutor(
     max_workers=4,
     thread_name_prefix="NexoDownloadWorker"
 )
-
-MAIN_LOOP: Optional[asyncio.AbstractEventLoop] = None
-
-@app.on_event("startup")
-async def on_startup():
-    global MAIN_LOOP
-    MAIN_LOOP = asyncio.get_running_loop()
 
 # Controle de ciclo de vida (Heartbeat da Janela WebView2)
 last_heartbeat = time.time()
@@ -129,13 +132,52 @@ DOWNLOADS_DIR.mkdir(parents=True, exist_ok=True)
 async def get_downloads_dir():
     return {"path": str(DOWNLOADS_DIR.resolve())}
 
+def is_safe_downloads_path(path: Path, base_dir: Path) -> bool:
+    """Verifica se o caminho resolvido reside estritamente dentro da pasta de downloads autorizada."""
+    try:
+        resolved_path = path.resolve()
+        resolved_base = base_dir.resolve()
+        return resolved_base in resolved_path.parents or resolved_path == resolved_base
+    except Exception:
+        return False
+
+BLOCKED_EXEC_EXTENSIONS = {
+    ".exe", ".bat", ".cmd", ".vbs", ".vbe", ".js", ".jse", ".wsf", ".wsh",
+    ".ps1", ".psm1", ".msi", ".msp", ".scr", ".com", ".pif", ".reg", ".dll",
+    ".pyd", ".cpl", ".hta", ".inf", ".ins", ".isp", ".jar", ".lnk"
+}
+
+# 1. Blindagem CORS: Restringe a origens estritamente locais (127.0.0.1 ou localhost)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origin_regex=r"^https?://(127\.0\.0\.1|localhost)(:\d+)?$",
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
+
+# 2. Middleware de Proteção Local: Rejeita chamadas de páginas externas da web (anti-CSRF/DNS Rebinding)
+class LocalHostSecurityMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        origin = request.headers.get("origin")
+        if origin and request.method in ["POST", "PUT", "DELETE"]:
+            orig_lower = origin.lower()
+            is_valid_local = (
+                orig_lower.startswith("http://127.0.0.1") or
+                orig_lower.startswith("http://localhost") or
+                orig_lower.startswith("https://127.0.0.1") or
+                orig_lower.startswith("https://localhost") or
+                orig_lower == "null"
+            )
+            if not is_valid_local:
+                return Response(
+                    content='{"detail": "Acesso externo não autorizado por política de segurança local."}',
+                    status_code=403,
+                    media_type="application/json"
+                )
+        return await call_next(request)
+
+app.add_middleware(LocalHostSecurityMiddleware)
 
 if STATIC_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
@@ -290,9 +332,15 @@ async def check_update_endpoint():
 
 @app.post("/api/apply-update")
 async def apply_update_endpoint(req: UpdateApplyRequest):
-    """Baixa o novo instalador e executa a instalação silenciosa reiniciando o app."""
+    """Baixa o novo instalador e executa a instalação silenciosa reiniciando o app com validação estrita."""
+    url = req.download_url.strip()
+    if not is_trusted_update_url(url):
+        raise HTTPException(
+            status_code=400,
+            detail="URL de atualização não autorizada. Atualizações devem vir exclusivamente do repositório oficial."
+        )
     loop = asyncio.get_running_loop()
-    loop.run_in_executor(None, apply_silent_update, req.download_url)
+    loop.run_in_executor(None, apply_silent_update, url)
     return {"status": "updating_in_background"}
 
 
@@ -444,7 +492,7 @@ def sanitize_filename(name: str) -> str:
 
 
 def concat_mp3_files(audio_files: List[Path], output_file: Path, ffmpeg_bin: str = "ffmpeg"):
-    """Gera um arquivo de áudio contínuo mesclando uma lista de faixas MP3."""
+    """Gera um arquivo de áudio contínuo mesclando uma lista de faixas MP3 com conformidade acústica."""
     if not audio_files or len(audio_files) < 2:
         return
     list_file = output_file.parent / f"_concat_{uuid.uuid4().hex[:8]}.txt"
@@ -454,20 +502,39 @@ def concat_mp3_files(audio_files: List[Path], output_file: Path, ffmpeg_bin: str
                 p_str = str(af.resolve()).replace("\\", "/")
                 f.write(f"file '{p_str}'\n")
                 
-        cmd = [
+        # Tentativa 1: Re-encode LAME 320k 44.1kHz (elimina dessincronia e distorção por taxas de amostragem diferentes)
+        cmd_reencode = [
             ffmpeg_bin, "-y",
             "-f", "concat",
             "-safe", "0",
             "-i", str(list_file),
-            "-c", "copy",
+            "-c:a", "libmp3lame",
+            "-b:a", "320k",
+            "-ar", "44100",
             str(output_file)
         ]
-        subprocess.run(
-            cmd,
+        res = subprocess.run(
+            cmd_reencode,
             capture_output=True,
-            check=True,
+            check=False,
             creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
         )
+        if res.returncode != 0:
+            # Fallback para stream copy rápido caso libmp3lame encontre problemas
+            cmd_copy = [
+                ffmpeg_bin, "-y",
+                "-f", "concat",
+                "-safe", "0",
+                "-i", str(list_file),
+                "-c", "copy",
+                str(output_file)
+            ]
+            subprocess.run(
+                cmd_copy,
+                capture_output=True,
+                check=True,
+                creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
+            )
     except Exception as e:
         print(f"[ConcatMP3] Aviso: {e}")
     finally:
@@ -981,12 +1048,17 @@ async def get_history(show_prive: bool = False):
 async def open_folder(req: OpenFolderRequest):
     target_folder = None
     if req.file_path:
-        f = Path(req.file_path)
+        f = Path(req.file_path).resolve()
         target_folder = f.parent if f.is_file() else f
     elif req.platform:
-        target_folder = DOWNLOADS_DIR / req.platform
+        clean_platform = sanitize_filename(req.platform)
+        target_folder = (DOWNLOADS_DIR / clean_platform).resolve()
     else:
-        target_folder = DOWNLOADS_DIR
+        target_folder = DOWNLOADS_DIR.resolve()
+
+    # Validação de segurança: o diretório deve estar estritamente dentro de DOWNLOADS_DIR
+    if not is_safe_downloads_path(target_folder, DOWNLOADS_DIR):
+        raise HTTPException(status_code=403, detail="Acesso negado: pasta fora do diretório de downloads.")
 
     if target_folder and target_folder.exists():
         try:
@@ -1003,13 +1075,26 @@ async def open_folder(req: OpenFolderRequest):
 
 @app.post("/api/open-file")
 async def open_file(req: OpenFolderRequest):
-    if not req.file_path or not Path(req.file_path).exists():
+    if not req.file_path:
+        raise HTTPException(status_code=400, detail="Caminho do arquivo não fornecido.")
+        
+    target_file = Path(req.file_path).resolve()
+    if not target_file.exists() or not target_file.is_file():
         raise HTTPException(status_code=404, detail="Arquivo não encontrado.")
+
+    # 1. Impede Path Traversal (arquivo fora de DOWNLOADS_DIR)
+    if not is_safe_downloads_path(target_file, DOWNLOADS_DIR):
+        raise HTTPException(status_code=403, detail="Acesso negado: o arquivo não reside na pasta de downloads.")
+
+    # 2. Bloqueia execução de arquivos perigosos/executáveis
+    if target_file.suffix.lower() in BLOCKED_EXEC_EXTENSIONS:
+        raise HTTPException(status_code=403, detail="Abertura de arquivos executáveis não é permitida por motivos de segurança.")
+
     try:
         if sys.platform == "win32":
-            os.startfile(str(req.file_path))
+            os.startfile(str(target_file))
         else:
-            subprocess.run(["xdg-open" if sys.platform != "darwin" else "open", str(req.file_path)])
+            subprocess.run(["xdg-open" if sys.platform != "darwin" else "open", str(target_file)])
         return {"success": True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

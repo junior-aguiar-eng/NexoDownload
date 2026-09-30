@@ -24,8 +24,22 @@ def get_prive_config_path() -> Path:
     """Caminho do arquivo de configuração da Sessão Privê."""
     return get_app_data_dir() / "prive_config.json"
 
-def _hash_password(password: str, salt: str) -> str:
-    """Gera hash SHA-256 da senha com salt."""
+from datetime import datetime, timezone
+
+PBKDF2_ITERATIONS = 200_000
+
+def _hash_password_pbkdf2(password: str, salt: str, iterations: int = PBKDF2_ITERATIONS) -> str:
+    """Gera hash criptográfico robusto utilizando PBKDF2-HMAC-SHA256."""
+    key = hashlib.pbkdf2_hmac(
+        "sha256",
+        password.encode("utf-8"),
+        salt.encode("utf-8"),
+        iterations
+    )
+    return key.hex()
+
+def _legacy_hash_password(password: str, salt: str) -> str:
+    """Suporte retroativo ao hash legado de iteração única."""
     salted = f"{salt}:{password}:{salt}".encode("utf-8")
     return hashlib.sha256(salted).hexdigest()
 
@@ -41,18 +55,20 @@ def is_prive_configured() -> bool:
         return False
 
 def setup_prive_password(password: str) -> bool:
-    """Cadastra a senha da Sessão Privê (primeiro uso ou redefinição)."""
+    """Cadastra a senha da Sessão Privê com PBKDF2-HMAC-SHA256."""
     password = password.strip()
     if len(password) < 4:
         return False
     
     salt = secrets.token_hex(16)
-    pwd_hash = _hash_password(password, salt)
+    pwd_hash = _hash_password_pbkdf2(password, salt)
     
     config_data = {
+        "algorithm": "pbkdf2_sha256",
+        "iterations": PBKDF2_ITERATIONS,
         "password_hash": pwd_hash,
         "salt": salt,
-        "created_at": str(os.times()[4])
+        "created_at": datetime.now(timezone.utc).isoformat()
     }
     
     try:
@@ -64,7 +80,10 @@ def setup_prive_password(password: str) -> bool:
         return False
 
 def verify_prive_password(password: str) -> bool:
-    """Valida a senha digitada pelo usuário."""
+    """
+    Valida a senha digitada pelo usuário.
+    Se o hash for do padrão legado (SHA-256 simples), faz upgrade transparente para PBKDF2.
+    """
     cfg_file = get_prive_config_path()
     if not cfg_file.exists():
         return False
@@ -74,9 +93,21 @@ def verify_prive_password(password: str) -> bool:
         salt = data.get("salt")
         if not stored_hash or not salt:
             return False
-        
-        computed_hash = _hash_password(password.strip(), salt)
-        return secrets.compare_digest(stored_hash, computed_hash)
+
+        clean_pwd = password.strip()
+        algo = data.get("algorithm")
+
+        if algo == "pbkdf2_sha256":
+            iterations = data.get("iterations", PBKDF2_ITERATIONS)
+            computed_hash = _hash_password_pbkdf2(clean_pwd, salt, iterations)
+            return secrets.compare_digest(stored_hash, computed_hash)
+        else:
+            # Hash legado: valida e migra automaticamente para PBKDF2
+            computed_legacy = _legacy_hash_password(clean_pwd, salt)
+            if secrets.compare_digest(stored_hash, computed_legacy):
+                setup_prive_password(clean_pwd)
+                return True
+            return False
     except Exception as e:
         print(f"[PriveEngine] Erro na validação: {e}")
         return False
