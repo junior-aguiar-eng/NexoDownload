@@ -9,8 +9,8 @@ on:
 
 jobs:
   test-and-build:
-    name: Build & Test (Windows x64)
-    runs-on: windows-latest
+    name: Build & Test (Linux x64)
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repositório

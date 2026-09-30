@@ -83,22 +83,24 @@ setup(
         print("[-] Falha na compilação Cython.")
         return False
 
-    # Move os .pyd gerados na raiz para web_app/ caso tenham sido colocados na raiz
-    for pyd in BASE_DIR.glob("*.pyd"):
-        dest = BASE_DIR / "web_app" / pyd.name
-        shutil.move(str(pyd), str(dest))
+    # Move os binários gerados (.pyd no Windows, .so no Linux) para web_app/
+    ext_pattern = "*.pyd" if sys.platform == "win32" else "*.so"
+    for ext_file in BASE_DIR.glob(ext_pattern):
+        dest = BASE_DIR / "web_app" / ext_file.name
+        shutil.move(str(ext_file), str(dest))
         print(f"[+] Binário movido para: {dest}")
 
     # Valida presença dos binários em web_app/
     success_count = 0
+    target_ext = ".pyd" if sys.platform == "win32" else ".so"
     for mod in MODULES_TO_COMPILE:
         stem = mod.stem
-        pyd_matches = list((BASE_DIR / "web_app").glob(f"{stem}.*.pyd"))
-        if pyd_matches:
-            print(f"[OK] Módulo compilado em C puro: {pyd_matches[0].name}")
+        matches = list((BASE_DIR / "web_app").glob(f"{stem}.*{target_ext}"))
+        if matches:
+            print(f"[OK] Módulo compilado em C puro: {matches[0].name}")
             success_count += 1
         else:
-            print(f"[!] Aviso: .pyd para {stem} não foi encontrado.")
+            print(f"[!] Aviso: Binário nativo para {stem} não foi encontrado.")
 
     # Remove arquivos intermediários .c
     for mod in MODULES_TO_COMPILE:
