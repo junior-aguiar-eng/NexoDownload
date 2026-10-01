@@ -294,8 +294,43 @@ class StudyApiHandler(SimpleHTTPRequestHandler):
         self._send_json({"error": message}, status_code=status_code)
 
 
+def _free_port_if_in_use(port: int):
+    """Garante que a porta esteja livre, encerrando processos órfãos anteriores se necessário."""
+    import socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.bind(("127.0.0.1", port))
+        s.close()
+        return
+    except OSError:
+        s.close()
+
+    if sys.platform == "win32":
+        import subprocess
+        try:
+            res = subprocess.run(
+                ["netstat", "-ano", "-p", "tcp"],
+                capture_output=True,
+                text=True,
+                check=False
+            )
+            current_pid = os.getpid()
+            for line in res.stdout.splitlines():
+                if f":{port}" in line and "LISTENING" in line:
+                    parts = line.strip().split()
+                    if parts:
+                        pid = int(parts[-1])
+                        if pid != current_pid and pid > 0:
+                            subprocess.run(["taskkill", "/F", "/PID", str(pid)], capture_output=True, check=False)
+                            import time
+                            time.sleep(0.5)
+        except Exception:
+            pass
+
+
 def start_study_server(host: str = "127.0.0.1", port: int = 8765):
     """Inicia o servidor de suporte local para a Extensão do Chrome e web clients."""
+    _free_port_if_in_use(port)
     server_address = (host, port)
     httpd = ThreadedHTTPServer(server_address, StudyApiHandler)
     try:
@@ -309,3 +344,4 @@ def start_study_server(host: str = "127.0.0.1", port: int = 8765):
     except KeyboardInterrupt:
         print("\nServidor encerrado.")
         httpd.server_close()
+
