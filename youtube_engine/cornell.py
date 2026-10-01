@@ -95,25 +95,14 @@ def generate_cornell_notes(
         "| :--- | :--- |"
     ]
 
-    for sec in sections:
-        first_p = sec[0]
-        start_sec = int(first_p.start_time)
-        ts_str = first_p.format_timestamp()
+    for cue_question, notes_combined, ts_str, start_sec in cues_data:
         yt_link = f"https://www.youtube.com/watch?v={metadata.video_id}&t={start_sec}s"
+        cue_cell = f"**O que é abordado em [`{ts_str}`]({yt_link})?**<br><br>_{cue_question}_"
+        notes_cell = notes_combined.replace("|", "\\|")
+        md.append(f"| {cue_cell} | {notes_cell} |")
 
-        # Gera uma pergunta-guia baseada nas primeiras palavras da seção
-        sample_text = first_p.text[:120].strip()
-        cue_question = f"**O que é abordado em [`{ts_str}`]({yt_link})?**<br><br>_Revisar conceitos centrais deste trecho._"
-
-        # Concatena os pontos da seção
-        notes_lines = []
-        for p in sec:
-            p_sec = int(p.start_time)
-            p_link = f"https://www.youtube.com/watch?v={metadata.video_id}&t={p_sec}s"
-            notes_lines.append(f"• [`[{p.format_timestamp()}]`]({p_link}) {p.text}")
-
-        notes_combined = "<br><br>".join(notes_lines).replace("|", "\\|")
-        md.append(f"| {cue_question} | {notes_combined} |")
+    if not cues_data:
+        md.append("| Transcrição em andamento | Nenhuma anotação detectada para o período. |")
 
     md.extend([
         "",

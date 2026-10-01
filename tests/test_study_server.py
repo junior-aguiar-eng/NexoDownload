@@ -56,3 +56,22 @@ def test_server_download_missing_param(study_server):
     with pytest.raises(urllib.error.HTTPError) as exc_info:
         urllib.request.urlopen(f"{study_server}/api/download")
     assert exc_info.value.code == 400
+
+
+def test_generate_cornell_notes_structure():
+    from youtube_engine.models import VideoMetadata, ParagraphBlock, SummaryReport
+    from youtube_engine.cornell import generate_cornell_notes
+
+    meta = VideoMetadata("test123", "https://youtube.com/watch?v=test123", "Aula Teste", "Canal Teste", "https://yt.com", "https://thumb")
+    paras = [
+        ParagraphBlock(0.0, 15.0, "Introducao aos conceitos fundamentais de direito."),
+        ParagraphBlock(15.0, 30.0, "Desenvolvimento da tese jurisprudencial.")
+    ]
+    summary = SummaryReport("Resumo do teste", [], [], "Markdown completo", "test-engine")
+
+    notes = generate_cornell_notes(meta, paras, summary)
+    assert "Caderno de Estudos (Método Cornell)" in notes
+    assert "Aula Teste" in notes
+    assert "Matriz de Estudo Cornell" in notes
+    assert "00:00" in notes
+
