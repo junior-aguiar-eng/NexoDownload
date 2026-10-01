@@ -1,0 +1,4 @@
+# Adicione aqui links ou IDs de vídeos do YouTube que deseja transcrever em lote
+# Um link por linha (linhas iniciadas com # são ignoradas)
+
+https://www.youtube.com/watch?v=XHzzIHvi0BI

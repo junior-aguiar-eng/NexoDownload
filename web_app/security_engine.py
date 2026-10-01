@@ -11,7 +11,10 @@ import hashlib
 import json
 import base64
 import subprocess
-import winreg
+try:
+    import winreg
+except ImportError:
+    winreg = None
 from pathlib import Path
 from datetime import datetime, timezone
 
@@ -29,6 +32,8 @@ def get_license_file_path() -> Path:
 
 def _get_registry_machine_guid() -> str:
     """Lê o MachineGuid do registro do Windows."""
+    if winreg is None:
+        return ""
     try:
         with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography", 0, winreg.KEY_READ | winreg.KEY_WOW64_64KEY) as key:
             guid, _ = winreg.QueryValueEx(key, "MachineGuid")

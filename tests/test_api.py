@@ -10,7 +10,13 @@ Valida:
 
 import sys
 from pathlib import Path
-import pytest
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+try:
+    from starlette.exceptions import StarletteDeprecationWarning
+    warnings.filterwarnings("ignore", category=StarletteDeprecationWarning)
+except (ImportError, AttributeError):
+    pass
 from starlette.testclient import TestClient
 
 BASE_DIR = Path(__file__).resolve().parent.parent

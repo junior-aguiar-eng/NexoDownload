@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Study Intelligence</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Top App Header -->
+  <header class="app-header">
+    <div class="header-brand">
+      <div class="diamond-badge">💎</div>
+      <div class="brand-text">
+        <h1 class="brand-title">Study Intelligence</h1>
+        <div class="sync-indicator" id="sync-status">
+          <span class="status-dot"></span>
+          <span id="sync-label">Aguardando vídeo...</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button class="icon-btn" id="btn-refresh" title="Atualizar dados da aula">🔄</button>
+      <button class="icon-btn" id="btn-copy" title="Copiar transcrição">📋</button>
+      <button class="icon-btn" id="btn-download-pdf" title="Baixar Caderno de Estudos em PDF Estruturado (Método Cornell)">📄</button>
+      <button class="icon-btn" id="btn-download" title="Baixar notas em Markdown">📥</button>
+      <button class="icon-btn" id="btn-download-audio" title="Baixar áudio (MP3/M4A) para ouvir em mobilidade">🎧</button>
+      <button class="icon-btn" id="btn-download-video" title="Baixar vídeo completo (MP4 720p/1080p)">🎬</button>
+    </div>
+  </header>
+
+  <!-- Video Info Bar -->
+  <div class="video-info-strip">
+    <div class="video-title" id="display-video-title">Nenhum vídeo do YouTube ativo</div>
+    <div class="video-channel" id="display-video-channel">Abra uma vídeo-aula no YouTube</div>
+  </div>
+
+  <!-- Player Control Bar -->
+  <div class="controls-bar">
+    <div class="speed-selector">
+      <span class="ctrl-label">Vel:</span>
+      <button class="btn-speed" data-rate="1.0">1.0x</button>
+      <button class="btn-speed" data-rate="1.25">1.25x</button>
+      <button class="btn-speed active" data-rate="1.5">1.5x</button>
+      <button class="btn-speed" data-rate="1.75">1.75x</button>
+      <button class="btn-speed" data-rate="2.0">2.0x</button>
+    </div>
+
+    <div class="step-controls">
+      <button class="btn-step" id="btn-rewind" title="Voltar 5 segundos">⏪ -5s</button>
+      <button class="btn-step" id="btn-forward" title="Avançar 5 segundos">+5s ⏩</button>
+    </div>
+
+    <div class="auto-scroll-wrap">
+      <label class="toggle-label">
+        <input type="checkbox" id="toggle-autoscroll" checked>
+        <span>Auto-scroll</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <nav class="tabs-nav">
+    <button class="tab-btn active" data-tab="transcript">📑 Transcrição</button>
+    <button class="tab-btn" data-tab="cornell">🎓 Método Cornell</button>
+    <button class="tab-btn" data-tab="summary">🎯 Resumo & Tópicos</button>
+  </nav>
+
+  <!-- Search Filter Box -->
+  <div class="search-section" id="search-section">
+    <div class="search-wrapper">
+      <input type="search" id="input-search" class="search-field" placeholder="Buscar leis, artigos ou termos na fala...">
+      <span class="search-glass">🔍</span>
+    </div>
+    <div class="search-counter" id="search-counter">Carregando conteúdo...</div>
+  </div>
+
+  <!-- Main Content Container -->
+  <main class="content-scrollable">
+    
+    <!-- Tab 1: Transcrição Sincronizada -->
+    <section class="tab-pane active" id="pane-transcript">
+      <div id="transcript-list" class="cards-list">
+        <!-- Parágrafos inseridos dinamicamente -->
+      </div>
+    </section>
+
+    <!-- Tab 2: Método Cornell -->
+    <section class="tab-pane" id="pane-cornell">
+      <div class="cornell-container" id="cornell-display">
+        <!-- Caderno Cornell inserido dinamicamente -->
+      </div>
+    </section>
+
+    <!-- Tab 3: Resumo & Tópicos -->
+    <section class="tab-pane" id="pane-summary">
+      <div class="summary-container" id="summary-display">
+        <!-- Resumo inserido dinamicamente -->
+      </div>
+    </section>
+
+    <!-- Estado Vazio / Carregamento -->
+    <div class="empty-state" id="empty-state" style="display: none;">
+      <div class="empty-icon">⏳</div>
+      <h3 id="empty-title">Conectando ao Motor de Estudos...</h3>
+      <p id="empty-desc">Certifique-se de que o vídeo do YouTube possui legendas ativas ou inicie o motor local com <code>python resumidor.py --serve</code>.</p>
+      <button class="btn-action" id="btn-manual-load">⚡ Carregar Transcrição</button>
+    </div>
+
+  </main>
+
+  <!-- Footer Actions -->
+  <footer class="app-footer">
+    <div class="footer-tip">Clique em qualquer parágrafo para navegar o vídeo instantaneamente.</div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

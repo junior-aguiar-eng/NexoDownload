@@ -22,9 +22,12 @@ if sys.stdout is None:
 if sys.stderr is None:
     sys.stderr = open(os.devnull, "w", encoding="utf-8")
 
-# 2. Prevenção de crash no Windows por desconexão de sockets (WinError 10054 / Proactor)
-if sys.platform == "win32":
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+# 2. Prevenção de crash no Windows por desconexão de sockets (WinError 10054 / Proactor em Python < 3.14)
+if sys.platform == "win32" and sys.version_info < (3, 14):
+    try:
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    except Exception:
+        pass
 
 # Determina o diretório base (lidando com modo congelado PyInstaller)
 if getattr(sys, "frozen", False):
@@ -76,8 +79,11 @@ def find_free_port(start_port: int = 8769) -> int:
 
 def start_server(host: str, port: int):
     """Inicia o servidor FastAPI local com Uvicorn sem logging com cores."""
-    if sys.platform == "win32":
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    if sys.platform == "win32" and sys.version_info < (3, 14):
+        try:
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+        except Exception:
+            pass
     try:
         config = uvicorn.Config(
             app=app,

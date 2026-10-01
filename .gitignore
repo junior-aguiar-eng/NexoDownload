@@ -32,15 +32,8 @@ __pycache__/
 # Downloads do usuário
 downloads/
 
-# Arquivos herdados / outros projetos (não fazem parte do Nexo Download App)
-chrome_extension/
+# Dados gerados em tempo de execução
 transcricoes/
-youtube_engine/
-baixar.py
-resumidor.py
-exemplos_videos.txt
-GUIA_RAPIDO_AMIGO.md
-INICIAR_SERVIDOR_ESTUDOS.bat
 
 # IDE e sistema operacional
 .vscode/

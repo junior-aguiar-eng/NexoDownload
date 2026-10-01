@@ -29,7 +29,11 @@ if sys.platform == "win32":
         sys.stderr.reconfigure(encoding="utf-8")
     except Exception:
         pass
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    if sys.version_info < (3, 14):
+        try:
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+        except Exception:
+            pass
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Query, BackgroundTasks, Request
 from fastapi.staticfiles import StaticFiles
@@ -144,7 +148,8 @@ def is_safe_downloads_path(path: Path, base_dir: Path) -> bool:
 BLOCKED_EXEC_EXTENSIONS = {
     ".exe", ".bat", ".cmd", ".vbs", ".vbe", ".js", ".jse", ".wsf", ".wsh",
     ".ps1", ".psm1", ".msi", ".msp", ".scr", ".com", ".pif", ".reg", ".dll",
-    ".pyd", ".cpl", ".hta", ".inf", ".ins", ".isp", ".jar", ".lnk"
+    ".pyd", ".cpl", ".hta", ".inf", ".ins", ".isp", ".jar", ".lnk",
+    ".sh", ".bash", ".bin", ".app", ".desktop"
 }
 
 # 1. Blindagem CORS: Restringe a origens estritamente locais (127.0.0.1 ou localhost)
@@ -381,10 +386,10 @@ async def select_folder_native():
 async def set_downloads_dir(req: UpdateFolderRequest):
     """Define globalmente a pasta de downloads ativa."""
     global DOWNLOADS_DIR
-    p = Path(req.path)
+    p = Path(req.path).resolve()
     if p.exists() and p.is_dir():
         DOWNLOADS_DIR = p
-        return {"success": True, "path": str(DOWNLOADS_DIR.resolve())}
+        return {"success": True, "path": str(DOWNLOADS_DIR)}
     return {"success": False, "message": "Diretório informado não existe."}
 
 
@@ -499,7 +504,7 @@ def concat_mp3_files(audio_files: List[Path], output_file: Path, ffmpeg_bin: str
     try:
         with open(list_file, "w", encoding="utf-8") as f:
             for af in audio_files:
-                p_str = str(af.resolve()).replace("\\", "/")
+                p_str = str(af.resolve()).replace("\\", "/").replace("'", "'\\''")
                 f.write(f"file '{p_str}'\n")
                 
         # Tentativa 1: Re-encode LAME 320k 44.1kHz (elimina dessincronia e distorção por taxas de amostragem diferentes)
