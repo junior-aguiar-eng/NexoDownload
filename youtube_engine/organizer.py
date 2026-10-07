@@ -26,16 +26,29 @@ from .pdf_generator import generate_study_pdf
 def sanitize_filename(name: str, max_length: int = 70) -> str:
     """
     Remove caracteres proibidos no Windows/Linux/macOS e trunca para tamanho seguro.
-    Proibidos no Windows: < > : " / \\ | ? *
+    Proibidos no Windows: < > : " / \\ | ? * e nomes de dispositivos reservados (CON, PRN, etc.).
     Também limpa caracteres que podem conflitar com URLs e links markdown.
     """
     if not name:
         return "sem_titulo"
+    # Remove caracteres de controle ASCII (< 32)
+    cleaned = "".join(ch for ch in name if ord(ch) >= 32)
     # Remove caracteres inválidos no sistema de arquivos
-    cleaned = re.sub(r'[<>:"/\\|?*()]', '_', name)
+    cleaned = re.sub(r'[<>:"/\\|?*()\[\]]', '_', cleaned)
     # Remove underscores repetidos e espaços
     cleaned = re.sub(r'_+', '_', cleaned)
     cleaned = " ".join(cleaned.split()).strip('._ ')
+
+    # Protege nomes de dispositivos reservados no Windows (CON, PRN, AUX, NUL, COM1-9, LPT1-9)
+    reserved = {
+        "CON", "PRN", "AUX", "NUL",
+        "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+        "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
+    }
+    stem_check = cleaned.split(".")[0].upper()
+    if stem_check in reserved:
+        cleaned = f"_{cleaned}_"
+
     if len(cleaned) > max_length:
         cleaned = cleaned[:max_length].rstrip('._ ')
     return cleaned or "video_youtube"
@@ -192,9 +205,19 @@ class LibraryOrganizer:
         }
         catalog.insert(0, new_entry)
 
-        # Salva catálogo JSON
-        with open(self.catalog_json_path, "w", encoding="utf-8") as f:
-            json.dump(catalog, f, ensure_ascii=False, indent=2)
+        # Salva catálogo JSON de forma atômica para evitar corrupção em falhas repentinas
+        tmp_json = self.catalog_json_path.with_suffix(".json.tmp")
+        try:
+            with open(tmp_json, "w", encoding="utf-8") as f:
+                json.dump(catalog, f, ensure_ascii=False, indent=2)
+            os.replace(tmp_json, self.catalog_json_path)
+        except Exception:
+            if tmp_json.exists():
+                try:
+                    tmp_json.unlink()
+                except Exception:
+                    pass
+            raise
 
         # Renderiza BIBLIOTECA.md
         total_videos = len(catalog)
@@ -230,5 +253,15 @@ class LibraryOrganizer:
 
         md.append("\n---\n_Biblioteca organizada no padrão Google Cloud Data Engineering._")
 
-        with open(self.library_md_path, "w", encoding="utf-8") as f:
-            f.write("\n".join(md))
+        tmp_md = self.library_md_path.with_suffix(".md.tmp")
+        try:
+            with open(tmp_md, "w", encoding="utf-8") as f:
+                f.write("\n".join(md))
+            os.replace(tmp_md, self.library_md_path)
+        except Exception:
+            if tmp_md.exists():
+                try:
+                    tmp_md.unlink()
+                except Exception:
+                    pass
+            raise

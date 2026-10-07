@@ -32,6 +32,13 @@ __pycache__/
 # Downloads do usuário
 downloads/
 
+# Módulo de Áudio - Arquivos de runtime e workspaces temporários
+audio_engine/outputs/
+audio_engine/training_workspace/
+audio_engine/modelos/*.pth
+audio_engine/modelos/*.index
+!audio_engine/modelos/.gitkeep
+
 # Dados gerados em tempo de execução
 transcricoes/
 

@@ -34,6 +34,7 @@ from .downloader import download_media
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     """Servidor HTTP multi-thread para requisições concorrentes sem bloqueio."""
     daemon_threads = True
+    allow_reuse_address = True
 
 
 class StudyApiHandler(SimpleHTTPRequestHandler):
@@ -176,7 +177,7 @@ class StudyApiHandler(SimpleHTTPRequestHandler):
         super().do_GET()
 
     def _find_video_dir(self, video_id: str) -> Path:
-        """Localiza a pasta da aula onde os arquivos foram salvos."""
+        """Localiza a pasta da aula onde os arquivos foram salvos com validação estrita de contenção."""
         catalog_path = self.base_dir / ".catalogo_index.json"
         if catalog_path.exists():
             try:
@@ -184,11 +185,13 @@ class StudyApiHandler(SimpleHTTPRequestHandler):
                     catalog = json.load(f)
                     for item in catalog:
                         if item.get("video_id") == video_id:
-                            return (self.base_dir / item["relative_dir"]).resolve()
+                            target = (self.base_dir / item["relative_dir"]).resolve()
+                            if self.base_dir in target.parents or target == self.base_dir:
+                                return target
             except Exception:
                 pass
         # Fallback para pasta padrão
-        fallback = self.base_dir / "downloads" / video_id
+        fallback = (self.base_dir / "downloads" / video_id).resolve()
         fallback.mkdir(parents=True, exist_ok=True)
         return fallback
 

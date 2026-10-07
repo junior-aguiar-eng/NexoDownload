@@ -50,7 +50,12 @@ def fetch_apple_music_collection_tracks(album_id: str, country: str = "us") -> O
     if not album_id or not album_id.isdigit():
         return None
         
-    for c in [country, "br", "us"]:
+    country_list = [c for c in [country, "br", "us", "gb", "es"] if c]
+    seen_countries = set()
+    for c in country_list:
+        if c in seen_countries:
+            continue
+        seen_countries.add(c)
         try:
             lookup_url = f"https://itunes.apple.com/lookup?id={album_id}&entity=song&country={c}"
             req = urllib.request.Request(

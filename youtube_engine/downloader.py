@@ -44,42 +44,50 @@ def download_media(
         if progress_callback and callable(progress_callback):
             progress_callback(d)
 
+    ffmpeg_loc = find_ffmpeg_path()
+    common_opts = {
+        "concurrent_fragment_downloads": 8,
+        "retries": 3,
+        "fragment_retries": 5,
+        "socket_timeout": 15,
+        "quiet": True,
+        "no_warnings": True,
+        "progress_hooks": [ytdl_hook],
+        "http_headers": {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
+        }
+    }
+    if ffmpeg_loc:
+        common_opts["ffmpeg_location"] = ffmpeg_loc
+
     # Configuração de acordo com o tipo de mídia
     if media_type == "speech_audio":
         # Formato ultra-leve para transcrição instantânea por IA
         ydl_opts = {
+            **common_opts,
             "format": "ba[abr<=96]/ba/worst/bestaudio",
             "outtmpl": str(out_path / "temp_speech_%(id)s.%(ext)s"),
-            "concurrent_fragment_downloads": 8,
-            "quiet": True,
-            "no_warnings": True,
-            "progress_hooks": [ytdl_hook]
         }
     elif media_type == "audio":
         # Extração de áudio de alta qualidade (MP3 192kbps) para estudos e podcast
         ydl_opts = {
+            **common_opts,
             "format": "bestaudio/best",
             "outtmpl": str(out_path / "00_aula_audio.%(ext)s"),
-            "concurrent_fragment_downloads": 8,
             "postprocessors": [{
                 "key": "FFmpegExtractAudio",
                 "preferredcodec": "mp3",
                 "preferredquality": "192",
-            }] if _has_ffmpeg() else [],
-            "quiet": True,
-            "no_warnings": True,
-            "progress_hooks": [ytdl_hook]
+            }] if _has_ffmpeg() else []
         }
     else:
         # Download de vídeo em MP4 (com fallback gracioso de resolução)
         ydl_opts = {
+            **common_opts,
             "format": f"bestvideo[ext=mp4][height<={max_height}]+bestaudio[ext=m4a]/best[ext=mp4]/best[height<={max_height}]/best",
             "outtmpl": str(out_path / "00_aula_video.%(ext)s"),
             "merge_output_format": "mp4",
-            "concurrent_fragment_downloads": 8,
-            "quiet": True,
-            "no_warnings": True,
-            "progress_hooks": [ytdl_hook]
         }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -93,7 +101,38 @@ def download_media(
         return filename
 
 
-def _has_ffmpeg() -> bool:
-    """Verifica se o FFmpeg está disponível no sistema."""
+def find_ffmpeg_path() -> Optional[str]:
+    """Descobre o executável ou pasta do FFmpeg no sistema ou no pacote."""
+    import sys
     import shutil
-    return shutil.which("ffmpeg") is not None
+    candidates = []
+    base_dir = Path(__file__).resolve().parent.parent
+    candidates.extend([
+        base_dir / "bin",
+        base_dir / "tools",
+        base_dir / "tools" / "ffmpeg" / "bin",
+        base_dir / "dist" / "NexoDownload" / "bin"
+    ])
+    localappdata = os.environ.get("LOCALAPPDATA", "")
+    if localappdata:
+        candidates.append(Path(localappdata) / "Microsoft" / "WinGet" / "Links")
+    candidates.extend([
+        Path("C:/Program Files/ffmpeg/bin"),
+        Path("C:/ffmpeg/bin")
+    ])
+
+    for c in candidates:
+        if (c / "ffmpeg.exe").exists() or (c / "ffmpeg").exists():
+            return str(c.resolve())
+
+    sys_ffmpeg = shutil.which("ffmpeg")
+    if sys_ffmpeg:
+        return str(Path(sys_ffmpeg).parent.resolve())
+
+    return None
+
+
+def _has_ffmpeg() -> bool:
+    """Verifica se o FFmpeg está disponível no sistema ou embutido no projeto."""
+    import shutil
+    return find_ffmpeg_path() is not None or shutil.which("ffmpeg") is not None

@@ -87,6 +87,16 @@
                     <span>Histórico</span>
                 </button>
 
+                <button class="nav-item" data-view="estudio-voz" id="navEstudioVoz">
+                    <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                    </svg>
+                    <span>Estúdio de Voz</span>
+                </button>
+
                 <button class="nav-item" data-view="configuracoes" id="navConfiguracoes">
                     <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="3"></circle>
@@ -445,6 +455,328 @@
                     <!-- Cards dinâmicos de arquivos baixados -->
                     <div class="empty-state" id="emptyCompletedDownloads">
                         <p>Seus arquivos baixados aparecerão aqui organizados por plataforma.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================= -->
+            <!-- 5. ESTÚDIO DE VOZ & IA (DSP + RVC NEURAL + APPLIO CLONADOR)    -->
+            <!-- ============================================================= -->
+            <section class="downloads-section audio-studio-section" id="sectionEstudioVoz">
+                <div class="section-header audio-studio-header">
+                    <div class="section-header-left">
+                        <div class="studio-badge-icon">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                <line x1="12" y1="19" x2="12" y2="23"></line>
+                                <line x1="8" y1="23" x2="16" y2="23"></line>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="section-title">Estúdio de Voz & IA <span class="studio-badge">Pós-Produção & Clonagem</span></h3>
+                            <p class="section-subtitle">DSP Tradicional (Formantes Livres de Esquilo), RVC IA Neural com RMVPE e Treinamento de Vozes</p>
+                        </div>
+                    </div>
+                    <div class="studio-status-pills">
+                        <span id="studioHwBadge" class="hardware-pill" title="Aceleração de Hardware Detectada">
+                            <span class="hw-dot"></span>
+                            <span id="studioHwText">CUDA / CPU</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Sub-tabs do Estúdio: Modificador vs Treinador -->
+                <div class="studio-tab-bar">
+                    <button type="button" class="studio-tab-btn active" data-tab="tabModificador" id="tabBtnModificador">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                        <span>Modificador de Voz (DSP & RVC)</span>
+                    </button>
+                    <button type="button" class="studio-tab-btn" data-tab="tabTreinador" id="tabBtnTreinador">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
+                        <span>Treinador de Voz (Applio Clonador)</span>
+                    </button>
+                </div>
+
+                <!-- ABA 1: MODIFICADOR DE VOZ -->
+                <div class="studio-panel active" id="tabModificador">
+                    <!-- Seleção de Áudio de Origem -->
+                    <div class="studio-card">
+                        <div class="studio-card-header">
+                            <span class="card-step-badge">1</span>
+                            <h4>Arquivo de Áudio de Origem</h4>
+                        </div>
+                        <div class="studio-input-row">
+                            <input type="text" id="inputAudioStudioSource" class="studio-text-input" placeholder="Selecione um áudio (.wav, .mp3, .m4a, etc.)" readonly>
+                            <button type="button" id="btnBrowseAudioSource" class="btn-primary-studio" title="Procurar no computador">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                <span>Selecionar Arquivo</span>
+                            </button>
+                            <button type="button" id="btnUseDemoAudio" class="btn-ghost-studio" title="Usar áudio de demonstração embutido">
+                                <span>Usar Áudio Demo</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Seleção do Motor: DSP Tradicional vs RVC IA -->
+                    <div class="studio-card">
+                        <div class="studio-card-header">
+                            <span class="card-step-badge">2</span>
+                            <h4>Escolha o Motor de Modificação Vocal</h4>
+                        </div>
+                        <div class="engine-switch-grid">
+                            <label class="engine-radio-card active" id="cardEngineDsp">
+                                <input type="radio" name="audioEngineType" value="dsp" checked>
+                                <div class="engine-radio-content">
+                                    <div class="engine-badge-tag">Motor 1</div>
+                                    <h5 class="engine-title">DSP Tradicional (stftpitchshift)</h5>
+                                    <p class="engine-desc">Deslocamento de tom e controle independente de formantes (zero efeito esquilo) + Redução estática de ruído de fundo.</p>
+                                </div>
+                            </label>
+                            <label class="engine-radio-card" id="cardEngineRvc">
+                                <input type="radio" name="audioEngineType" value="rvc">
+                                <div class="engine-radio-content">
+                                    <div class="engine-badge-tag">Motor 2</div>
+                                    <h5 class="engine-title">RVC IA Neural (v2 + RMVPE)</h5>
+                                    <p class="engine-desc">Conversão tímbrica hiper-realista com pesos pré-treinados (.pth), índice vetorial FAISS (.index) e GPU CUDA.</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Parâmetros Motor 1 (DSP Tradicional) -->
+                    <div class="studio-card engine-controls-box" id="boxDspControls">
+                        <div class="studio-card-header">
+                            <span class="card-step-badge">3</span>
+                            <h4>Parâmetros de Processamento Digital (DSP)</h4>
+                        </div>
+                        <div class="studio-grid-2col">
+                            <div class="studio-control-group">
+                                <label class="studio-label">Presets Profissionais de Estúdio</label>
+                                <select id="selDspPreset" class="option-select studio-select">
+                                    <option value="deep_voice" selected>Voz Grave / Radialista Profissional (-3.5 semitons, -2 formantes)</option>
+                                    <option value="radio_announcer">Locutor de Rádio Dinâmico (-2 semitons, -1 formante)</option>
+                                    <option value="female_bright">Agudo Feminino Brilhante (+3.5 semitons, +2 formantes)</option>
+                                    <option value="chipmunk_free_high">Tom Alto Natural / Sem Efeito Esquilo (+5 semitons)</option>
+                                    <option value="clean_denoised">Apenas Limpeza Acústica e Denoise (0 semitons)</option>
+                                    <option value="custom">Personalizado (Sliders Manuais)</option>
+                                </select>
+                            </div>
+                            <div class="studio-control-group">
+                                <label class="studio-label">Redução de Ruído Estático (noisereduce)</label>
+                                <div class="toggle-control-wrap" style="margin-top: 6px;">
+                                    <label class="switch">
+                                        <input type="checkbox" id="chkDspDenoise" checked>
+                                        <span class="slider round"></span>
+                                    </label>
+                                    <span class="toggle-label">Ativar filtro espectral de fundo</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="studio-sliders-grid">
+                            <div class="slider-group">
+                                <div class="slider-label-row">
+                                    <span>Transposição de Tom (Pitch Shift):</span>
+                                    <span id="dspPitchVal" class="slider-val-tag">-3.5 st</span>
+                                </div>
+                                <input type="range" id="sliderDspPitch" min="-12" max="12" step="0.5" value="-3.5" class="studio-range">
+                                <div class="slider-ticks">
+                                    <span>-12 st (Grave)</span>
+                                    <span>0 st</span>
+                                    <span>+12 st (Agudo)</span>
+                                </div>
+                            </div>
+
+                            <div class="slider-group">
+                                <div class="slider-label-row">
+                                    <span>Deslocamento de Formantes (Timbre):</span>
+                                    <span id="dspFormantVal" class="slider-val-tag">-2.0 st</span>
+                                </div>
+                                <input type="range" id="sliderDspFormant" min="-12" max="12" step="0.5" value="-2.0" class="studio-range">
+                                <div class="slider-ticks">
+                                    <span>-12 st (Encorpado)</span>
+                                    <span>0 st (Original)</span>
+                                    <span>+12 st (Fino)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Parâmetros Motor 2 (RVC IA Neural) -->
+                    <div class="studio-card engine-controls-box hidden" id="boxRvcControls">
+                        <div class="studio-card-header">
+                            <span class="card-step-badge">3</span>
+                            <h4>Parâmetros da Rede Neural RVC v2</h4>
+                        </div>
+                        <div class="studio-grid-2col">
+                            <div class="studio-control-group">
+                                <label class="studio-label">Modelo de Voz (.pth)</label>
+                                <div class="model-select-wrap">
+                                    <select id="selRvcModel" class="option-select studio-select">
+                                        <option value="">Carregando modelos disponíveis...</option>
+                                    </select>
+                                    <button type="button" id="btnOpenModelsFolder" class="btn-folder-action" title="Abrir pasta de modelos no Windows Explorer">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                                    </button>
+                                </div>
+                                <span class="input-helper">Coloque arquivos .pth e .index em 'audio_engine/modelos/' ou treine abaixo.</span>
+                            </div>
+
+                            <div class="studio-control-group">
+                                <label class="studio-label">Algoritmo F0 (Pitch Fundamental)</label>
+                                <select id="selRvcF0" class="option-select studio-select">
+                                    <option value="rmvpe" selected>RMVPE (Recomendado - Alta precisão e estabilidade)</option>
+                                    <option value="harvest">Harvest (Clássico melódico)</option>
+                                    <option value="crepe">Crepe (Acústico denso)</option>
+                                    <option value="pm">PM (Rápido CPU)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="studio-sliders-grid">
+                            <div class="slider-group">
+                                <div class="slider-label-row">
+                                    <span>Transposição de Oitava / Tom:</span>
+                                    <span id="rvcPitchVal" class="slider-val-tag">0 st</span>
+                                </div>
+                                <input type="range" id="sliderRvcPitch" min="-12" max="12" step="1" value="0" class="studio-range">
+                                <div class="slider-ticks">
+                                    <span>-12 st (M->H)</span>
+                                    <span>0 st</span>
+                                    <span>+12 st (H->M)</span>
+                                </div>
+                            </div>
+
+                            <div class="slider-group">
+                                <div class="slider-label-row">
+                                    <span>Taxa de Recuperação FAISS (.index):</span>
+                                    <span id="rvcIndexVal" class="slider-val-tag">0.75</span>
+                                </div>
+                                <input type="range" id="sliderRvcIndex" min="0" max="1" step="0.05" value="0.75" class="studio-range">
+                                <div class="slider-ticks">
+                                    <span>0.0 (Apenas rede)</span>
+                                    <span>0.75 (Equilibrado)</span>
+                                    <span>1.0 (Timbre estrito)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botão de Ação & Execução -->
+                    <div class="studio-actions-row">
+                        <button type="button" id="btnExecuteVoiceProcess" class="btn-execute-studio">
+                            <svg class="studio-play-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                            <span id="btnExecuteVoiceText">Processar Áudio em Alta Fidelidade</span>
+                        </button>
+                    </div>
+
+                    <!-- Player de Áudio Embutido & Resultado -->
+                    <div id="studioPlayerCard" class="studio-player-card hidden">
+                        <div class="player-card-header">
+                            <div class="player-meta-info">
+                                <span class="player-status-tag">Sucesso</span>
+                                <h4 id="playerAudioTitle" class="player-audio-title">audio_processado.wav</h4>
+                                <span id="playerAudioMeta" class="player-audio-meta">24-bit PCM &bull; 44.1 kHz WAV</span>
+                            </div>
+                            <div class="player-actions-right">
+                                <button type="button" id="btnOpenProcessedFile" class="btn-clean-ghost">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                                    <span>Abrir no Explorer</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="player-audio-element-wrap">
+                            <audio id="audioStudioPlayer" controls class="nexo-audio-player"></audio>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA 2: TREINADOR DE VOZ (APPLIO CLONADOR) -->
+                <div class="studio-panel hidden" id="tabTreinador">
+                    <div class="studio-card">
+                        <div class="studio-card-header">
+                            <span class="card-step-badge">1</span>
+                            <h4>Dataset de Gravação de Voz</h4>
+                        </div>
+                        <p class="studio-instruction-text">
+                            Selecione um arquivo de áudio de 5 a 15 minutos com a voz que deseja clonar (áudio limpo, podcast, leitura de texto ou gravação de microfone).
+                        </p>
+                        <div class="studio-input-row">
+                            <input type="text" id="inputTrainAudioSource" class="studio-text-input" placeholder="Arquivo ou pasta de áudios de treino..." readonly>
+                            <button type="button" id="btnBrowseTrainSource" class="btn-primary-studio">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                <span>Selecionar Gravação</span>
+                            </button>
+                            <button type="button" id="btnUseDemoForTraining" class="btn-ghost-studio">
+                                <span>Usar Gravação Demo</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="studio-card">
+                        <div class="studio-card-header">
+                            <span class="card-step-badge">2</span>
+                            <h4>Configuração do Novo Modelo de Voz</h4>
+                        </div>
+                        <div class="studio-grid-2col">
+                            <div class="studio-control-group">
+                                <label class="studio-label">Nome do Modelo (Identificador)</label>
+                                <input type="text" id="inputTrainModelName" class="setting-input studio-input-active" placeholder="Ex: minha_voz, locutor_pro, cantor_x" value="minha_voz">
+                            </div>
+                            <div class="studio-control-group">
+                                <label class="studio-label">Taxa de Amostragem Alvo</label>
+                                <select id="selTrainSampleRate" class="option-select studio-select">
+                                    <option value="40k" selected>40 kHz (Padrão ouro RVC v2)</option>
+                                    <option value="48k">48 kHz (Ultra Alta Fidelidade)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="studio-sliders-grid" style="margin-top: 16px;">
+                            <div class="slider-group">
+                                <div class="slider-label-row">
+                                    <span>Épocas de Treinamento:</span>
+                                    <span id="trainEpochsVal" class="slider-val-tag">100 épocas</span>
+                                </div>
+                                <input type="range" id="sliderTrainEpochs" min="20" max="300" step="10" value="100" class="studio-range">
+                                <div class="slider-ticks">
+                                    <span>20 (Rápido)</span>
+                                    <span>100 (Recomendado)</span>
+                                    <span>300 (Profundo)</span>
+                                </div>
+                            </div>
+
+                            <div class="studio-control-group" style="display: flex; flex-direction: column; justify-content: center;">
+                                <label class="studio-label">Higienização Acústica Prévia</label>
+                                <div class="toggle-control-wrap" style="margin-top: 6px;">
+                                    <label class="switch">
+                                        <input type="checkbox" id="chkTrainDenoise" checked>
+                                        <span class="slider round"></span>
+                                    </label>
+                                    <span class="toggle-label">Fatiar silêncios e aplicar Denoise no dataset</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="studio-actions-row">
+                        <button type="button" id="btnStartTraining" class="btn-execute-studio btn-train-gradient">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="10 8 16 12 10 16 10 8"></polygon><circle cx="12" cy="12" r="10"></circle></svg>
+                            <span id="btnStartTrainText">Iniciar Treinamento da Nova Voz</span>
+                        </button>
+                    </div>
+
+                    <!-- Progresso do Treinamento -->
+                    <div id="trainProgressCard" class="studio-progress-card hidden">
+                        <div class="progress-card-header">
+                            <h4 id="trainProgressTitle">Treinamento em Andamento...</h4>
+                            <span id="trainProgressPercent" class="progress-percent-tag">0%</span>
+                        </div>
+                        <div class="studio-progress-track">
+                            <div id="trainProgressBar" class="studio-progress-fill" style="width: 0%;"></div>
+                        </div>
+                        <p id="trainProgressMsg" class="studio-progress-msg">Iniciando pipeline...</p>
                     </div>
                 </div>
             </section>

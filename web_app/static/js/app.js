@@ -682,16 +682,61 @@ document.addEventListener("DOMContentLoaded", () => {
                     retryCount++;
                     setTimeout(initWs, 1200);
                 } else {
-                    updateActiveCard(taskId, {
-                        status: "error",
-                        message: "Falha na conexão de progresso em tempo real."
-                    });
+                    // Fallback resiliente: ativa polling HTTP se WebSocket cair
+                    startFallbackPolling();
                 }
             };
         }
 
+        function startFallbackPolling() {
+            const pollTimer = setInterval(async () => {
+                try {
+                    const res = await fetch(`/api/download/status/${taskId}`);
+                    if (res.ok) {
+                        const statusData = await res.json();
+                        const payload = statusData.last_payload && Object.keys(statusData.last_payload).length > 0 
+                            ? statusData.last_payload 
+                            : {
+                                status: statusData.status,
+                                percent: statusData.percent,
+                                message: statusData.message,
+                                platform: statusData.platform,
+                                is_prive: statusData.is_prive
+                            };
+                        updateActiveCard(taskId, payload);
+                        if (statusData.status === "finished" || statusData.status === "error" || statusData.status === "cancelled") {
+                            clearInterval(pollTimer);
+                        }
+                    } else if (res.status === 404) {
+                        clearInterval(pollTimer);
+                    }
+                } catch {
+                    // Ignora falhas transitórias durante polling
+                }
+            }, 2000);
+        }
+
         initWs();
     }
+
+    window.cancelDownloadTask = async function(taskId) {
+        const btn = document.getElementById(`cancel-${taskId}`);
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = `<span>Cancelando...</span>`;
+        }
+        try {
+            const resp = await fetch(`/api/download/cancel/${taskId}`, { method: "POST" });
+            if (resp.ok) {
+                const resData = await resp.json();
+                if (resData.success) {
+                    showToast("Cancelamento solicitado.");
+                }
+            }
+        } catch (e) {
+            console.error("Erro ao cancelar tarefa:", e);
+        }
+    };
 
     function createActiveDownloadCard(taskId, title, platform, thumbUrl) {
         emptyActiveDownloads.classList.add("hidden");
@@ -709,7 +754,13 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="download-details">
                 <div class="download-header-line">
                     <h4 class="download-title" title="${escapeHtml(title)}">${escapeHtml(title)}</h4>
-                    <span class="download-status-badge status-starting" id="badge-${taskId}">Iniciando...</span>
+                    <div class="download-header-actions">
+                        <span class="download-status-badge status-starting" id="badge-${taskId}">Iniciando...</span>
+                        <button type="button" class="btn-cancel-task" id="cancel-${taskId}" title="Cancelar Download" onclick="window.cancelDownloadTask('${taskId}')">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            <span>Cancelar</span>
+                        </button>
+                    </div>
                 </div>
                 <div class="progress-bar-bg">
                     <div class="progress-bar-fill" id="fill-${taskId}" style="width: 5%"></div>
@@ -740,6 +791,27 @@ document.addEventListener("DOMContentLoaded", () => {
         const speed = document.getElementById(`speed-${taskId}`);
         const eta = document.getElementById(`eta-${taskId}`);
         const percent = document.getElementById(`percent-${taskId}`);
+        const cancelBtn = document.getElementById(`cancel-${taskId}`);
+
+        if (data.status === "cancelled") {
+            if (badge) {
+                badge.className = "download-status-badge status-error";
+                badge.textContent = "Cancelado";
+            }
+            if (fill) fill.style.background = "#94a3b8";
+            if (msg) msg.textContent = data.message || "Download cancelado pelo usuário.";
+            if (cancelBtn) cancelBtn.remove();
+            showToast("Download cancelado");
+            setTimeout(() => {
+                card.remove();
+                activeTasksCount = Math.max(0, activeTasksCount - 1);
+                if (activeTasksCount === 0) {
+                    emptyActiveDownloads.classList.remove("hidden");
+                }
+                updateCounts();
+            }, 2200);
+            return;
+        }
 
         if (data.percent !== undefined) {
             fill.style.width = `${Math.min(data.percent, 100)}%`;
@@ -757,6 +829,7 @@ document.addEventListener("DOMContentLoaded", () => {
             badge.className = "download-status-badge status-converting";
             badge.textContent = "Processando";
         } else if (data.status === "finished") {
+            if (cancelBtn) cancelBtn.remove();
             badge.className = "download-status-badge status-finished";
             badge.textContent = "Concluído";
             showToast("Download concluído com sucesso!");
@@ -771,6 +844,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 addCompletedCard(data);
             }, 1200);
         } else if (data.status === "error") {
+            if (cancelBtn) cancelBtn.remove();
             badge.className = "download-status-badge status-error";
             badge.textContent = "Falhou";
             fill.style.background = "#ef4444";
@@ -915,6 +989,7 @@ document.addEventListener("DOMContentLoaded", () => {
         item.addEventListener("click", () => {
             navItems.forEach(n => n.classList.remove("active"));
             item.classList.add("active");
+            const view = item.dataset.view;
             if (view === "inicio") {
                 window.scrollTo({ top: 0, behavior: "smooth" });
                 if (urlInput) urlInput.focus();
@@ -926,6 +1001,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.querySelector(".platforms-section").scrollIntoView({ behavior: "smooth" });
             } else if (view === "configuracoes") {
                 openSettingsModal();
+            } else if (view === "estudio-voz") {
+                const studioSection = document.getElementById("sectionEstudioVoz");
+                if (studioSection) studioSection.scrollIntoView({ behavior: "smooth" });
             }
         });
     });
@@ -1191,4 +1269,441 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Inicialização da Sessão Privê
     checkPriveStatus();
+
+    // =========================================================================
+    // 13. Estúdio de Voz & IA (DSP Tradicional, RVC Neural e Treinador Applio)
+    // =========================================================================
+    const studioHwBadge = document.getElementById("studioHwBadge");
+    const studioHwText = document.getElementById("studioHwText");
+    const tabBtnModificador = document.getElementById("tabBtnModificador");
+    const tabBtnTreinador = document.getElementById("tabBtnTreinador");
+    const tabModificador = document.getElementById("tabModificador");
+    const tabTreinador = document.getElementById("tabTreinador");
+
+    const inputAudioStudioSource = document.getElementById("inputAudioStudioSource");
+    const btnBrowseAudioSource = document.getElementById("btnBrowseAudioSource");
+    const btnUseDemoAudio = document.getElementById("btnUseDemoAudio");
+
+    const cardEngineDsp = document.getElementById("cardEngineDsp");
+    const cardEngineRvc = document.getElementById("cardEngineRvc");
+    const radioEngineDsp = document.querySelector('input[name="audioEngineType"][value="dsp"]');
+    const radioEngineRvc = document.querySelector('input[name="audioEngineType"][value="rvc"]');
+    const boxDspControls = document.getElementById("boxDspControls");
+    const boxRvcControls = document.getElementById("boxRvcControls");
+
+    const selDspPreset = document.getElementById("selDspPreset");
+    const chkDspDenoise = document.getElementById("chkDspDenoise");
+    const sliderDspPitch = document.getElementById("sliderDspPitch");
+    const sliderDspFormant = document.getElementById("sliderDspFormant");
+    const dspPitchVal = document.getElementById("dspPitchVal");
+    const dspFormantVal = document.getElementById("dspFormantVal");
+
+    const selRvcModel = document.getElementById("selRvcModel");
+    const btnOpenModelsFolder = document.getElementById("btnOpenModelsFolder");
+    const selRvcF0 = document.getElementById("selRvcF0");
+    const sliderRvcPitch = document.getElementById("sliderRvcPitch");
+    const sliderRvcIndex = document.getElementById("sliderRvcIndex");
+    const rvcPitchVal = document.getElementById("rvcPitchVal");
+    const rvcIndexVal = document.getElementById("rvcIndexVal");
+
+    const btnExecuteVoiceProcess = document.getElementById("btnExecuteVoiceProcess");
+    const btnExecuteVoiceText = document.getElementById("btnExecuteVoiceText");
+    const studioPlayerCard = document.getElementById("studioPlayerCard");
+    const playerAudioTitle = document.getElementById("playerAudioTitle");
+    const playerAudioMeta = document.getElementById("playerAudioMeta");
+    const audioStudioPlayer = document.getElementById("audioStudioPlayer");
+    const btnOpenProcessedFile = document.getElementById("btnOpenProcessedFile");
+
+    // Treinador
+    const inputTrainAudioSource = document.getElementById("inputTrainAudioSource");
+    const btnBrowseTrainSource = document.getElementById("btnBrowseTrainSource");
+    const btnUseDemoForTraining = document.getElementById("btnUseDemoForTraining");
+    const inputTrainModelName = document.getElementById("inputTrainModelName");
+    const selTrainSampleRate = document.getElementById("selTrainSampleRate");
+    const sliderTrainEpochs = document.getElementById("sliderTrainEpochs");
+    const trainEpochsVal = document.getElementById("trainEpochsVal");
+    const chkTrainDenoise = document.getElementById("chkTrainDenoise");
+    const btnStartTraining = document.getElementById("btnStartTraining");
+    const btnStartTrainText = document.getElementById("btnStartTrainText");
+    const trainProgressCard = document.getElementById("trainProgressCard");
+    const trainProgressTitle = document.getElementById("trainProgressTitle");
+    const trainProgressPercent = document.getElementById("trainProgressPercent");
+    const trainProgressBar = document.getElementById("trainProgressBar");
+    const trainProgressMsg = document.getElementById("trainProgressMsg");
+
+    let lastProcessedFilePath = null;
+    let audioDemoPath = "";
+    let dspPresetsCatalog = {};
+    let trainPollingInterval = null;
+
+    // Alternância de Abas: Modificador vs Treinador
+    if (tabBtnModificador && tabBtnTreinador) {
+        tabBtnModificador.addEventListener("click", () => {
+            tabBtnModificador.classList.add("active");
+            tabBtnTreinador.classList.remove("active");
+            tabModificador.classList.remove("hidden");
+            tabTreinador.classList.add("hidden");
+        });
+        tabBtnTreinador.addEventListener("click", () => {
+            tabBtnTreinador.classList.add("active");
+            tabBtnModificador.classList.remove("active");
+            tabTreinador.classList.remove("hidden");
+            tabModificador.classList.add("hidden");
+        });
+    }
+
+    // Alternância de Motor (DSP vs RVC)
+    function updateEngineView() {
+        const isDsp = radioEngineDsp && radioEngineDsp.checked;
+        if (cardEngineDsp) cardEngineDsp.classList.toggle("active", isDsp);
+        if (cardEngineRvc) cardEngineRvc.classList.toggle("active", !isDsp);
+        if (boxDspControls) boxDspControls.classList.toggle("hidden", !isDsp);
+        if (boxRvcControls) boxRvcControls.classList.toggle("hidden", isDsp);
+    }
+
+    if (radioEngineDsp) radioEngineDsp.addEventListener("change", updateEngineView);
+    if (radioEngineRvc) radioEngineRvc.addEventListener("change", updateEngineView);
+
+    // Carregamento de Status e Modelos
+    async function loadAudioEngineStatus() {
+        try {
+            const resp = await fetch("/api/audio/status");
+            const data = await resp.json();
+            if (data.available) {
+                if (studioHwText) {
+                    const devText = (data.device === "cuda") ? "GPU (CUDA Ativo)" : "CPU (Processamento Local)";
+                    studioHwText.textContent = devText;
+                }
+                if (data.demo_path) audioDemoPath = data.demo_path;
+                if (data.dsp_presets) dspPresetsCatalog = data.dsp_presets;
+            } else {
+                if (studioHwText) studioHwText.textContent = "Motor Não Carregado";
+            }
+        } catch (e) {
+            console.warn("[AudioStudio]: Falha ao checar status:", e);
+        }
+    }
+
+    async function loadAudioModels() {
+        if (!selRvcModel) return;
+        try {
+            const resp = await fetch("/api/audio/models");
+            const data = await resp.json();
+            selRvcModel.innerHTML = "";
+            if (data.models && data.models.length > 0) {
+                data.models.forEach(m => {
+                    const opt = document.createElement("option");
+                    opt.value = m.name;
+                    opt.textContent = `${m.name} (${m.size_mb} MB${m.has_index ? " • FAISS Index" : ""})`;
+                    selRvcModel.appendChild(opt);
+                });
+            } else {
+                const opt = document.createElement("option");
+                opt.value = "";
+                opt.textContent = "Nenhum modelo .pth encontrado em 'modelos/'";
+                selRvcModel.appendChild(opt);
+            }
+        } catch (e) {
+            console.warn("[AudioStudio]: Falha ao listar modelos:", e);
+        }
+    }
+
+    // Seletor Nativo de Áudio de Entrada
+    if (btnBrowseAudioSource) {
+        btnBrowseAudioSource.addEventListener("click", async () => {
+            btnBrowseAudioSource.disabled = true;
+            try {
+                const resp = await fetch("/api/audio/select-file", { method: "POST" });
+                const data = await resp.json();
+                if (data.success && data.path) {
+                    inputAudioStudioSource.value = data.path;
+                    showToast("Áudio selecionado: " + (data.name || data.path));
+                }
+            } catch (e) {
+                showToast("Erro ao abrir seletor de arquivos.");
+            } finally {
+                btnBrowseAudioSource.disabled = false;
+            }
+        });
+    }
+
+    // Botão de Áudio Demo
+    if (btnUseDemoAudio) {
+        btnUseDemoAudio.addEventListener("click", () => {
+            if (audioDemoPath) {
+                inputAudioStudioSource.value = audioDemoPath;
+                showToast("Áudio de demonstração carregado com sucesso!");
+            } else {
+                showToast("Áudio de demonstração não localizado.");
+            }
+        });
+    }
+
+    // Controle de Sliders DSP
+    if (sliderDspPitch && dspPitchVal) {
+        sliderDspPitch.addEventListener("input", (e) => {
+            const val = parseFloat(e.target.value);
+            dspPitchVal.textContent = `${val >= 0 ? "+" : ""}${val.toFixed(1)} st`;
+            if (selDspPreset) selDspPreset.value = "custom";
+        });
+    }
+
+    if (sliderDspFormant && dspFormantVal) {
+        sliderDspFormant.addEventListener("input", (e) => {
+            const val = parseFloat(e.target.value);
+            dspFormantVal.textContent = `${val >= 0 ? "+" : ""}${val.toFixed(1)} st`;
+            if (selDspPreset) selDspPreset.value = "custom";
+        });
+    }
+
+    // Preset selecionado no DSP
+    if (selDspPreset) {
+        selDspPreset.addEventListener("change", (e) => {
+            const pKey = e.target.value;
+            if (pKey !== "custom" && dspPresetsCatalog[pKey]) {
+                const p = dspPresetsCatalog[pKey];
+                sliderDspPitch.value = p.semitones;
+                dspPitchVal.textContent = `${p.semitones >= 0 ? "+" : ""}${p.semitones.toFixed(1)} st`;
+                sliderDspFormant.value = p.formant_shift_semitones;
+                dspFormantVal.textContent = `${p.formant_shift_semitones >= 0 ? "+" : ""}${p.formant_shift_semitones.toFixed(1)} st`;
+                if (chkDspDenoise) chkDspDenoise.checked = p.reduce_noise;
+            }
+        });
+    }
+
+    // Controle de Sliders RVC
+    if (sliderRvcPitch && rvcPitchVal) {
+        sliderRvcPitch.addEventListener("input", (e) => {
+            const val = parseInt(e.target.value);
+            rvcPitchVal.textContent = `${val >= 0 ? "+" : ""}${val} st`;
+        });
+    }
+
+    if (sliderRvcIndex && rvcIndexVal) {
+        sliderRvcIndex.addEventListener("input", (e) => {
+            rvcIndexVal.textContent = e.target.value;
+        });
+    }
+
+    // Abrir pasta de modelos no Explorer
+    if (btnOpenModelsFolder) {
+        btnOpenModelsFolder.addEventListener("click", async () => {
+            try {
+                await fetch("/api/audio/open-models-folder", { method: "POST" });
+                showToast("Pasta de modelos aberta no Windows Explorer");
+            } catch (e) {
+                showToast("Erro ao abrir pasta de modelos");
+            }
+        });
+    }
+
+    // Executar Modificação Vocal (DSP ou RVC)
+    if (btnExecuteVoiceProcess) {
+        btnExecuteVoiceProcess.addEventListener("click", async () => {
+            const inputPath = inputAudioStudioSource ? inputAudioStudioSource.value.trim() : "";
+            if (!inputPath) {
+                showToast("Selecione primeiro um arquivo de áudio de origem!");
+                return;
+            }
+
+            const isDsp = radioEngineDsp && radioEngineDsp.checked;
+            btnExecuteVoiceProcess.disabled = true;
+            const originalText = btnExecuteVoiceText.textContent;
+            btnExecuteVoiceText.textContent = isDsp ? "Processando filtros DSP..." : "Realizando inferência RVC neural...";
+
+            try {
+                let resp;
+                if (isDsp) {
+                    const payload = {
+                        input_path: inputPath,
+                        preset: selDspPreset ? selDspPreset.value : "custom",
+                        semitones: parseFloat(sliderDspPitch.value),
+                        formant_shift_semitones: parseFloat(sliderDspFormant.value),
+                        preserve_formants: true,
+                        reduce_noise: chkDspDenoise ? chkDspDenoise.checked : true,
+                        noise_prop_decrease: 0.85
+                    };
+                    resp = await fetch("/api/audio/process-dsp", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+                } else {
+                    const selectedModel = selRvcModel ? selRvcModel.value : "";
+                    if (!selectedModel) {
+                        showToast("Selecione um modelo de voz RVC válido (.pth)!");
+                        btnExecuteVoiceProcess.disabled = false;
+                        btnExecuteVoiceText.textContent = originalText;
+                        return;
+                    }
+                    const payload = {
+                        input_path: inputPath,
+                        model_name: selectedModel,
+                        pitch_semitones: parseInt(sliderRvcPitch.value),
+                        index_rate: parseFloat(sliderRvcIndex.value),
+                        f0_method: selRvcF0 ? selRvcF0.value : "rmvpe"
+                    };
+                    resp = await fetch("/api/audio/process-rvc", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+                }
+
+                const data = await resp.json();
+                if (resp.ok && data.success) {
+                    lastProcessedFilePath = data.output_path;
+                    if (playerAudioTitle) playerAudioTitle.textContent = data.filename;
+                    if (playerAudioMeta) playerAudioMeta.textContent = `${data.size_mb} MB • 24-bit PCM WAV Estúdio`;
+                    if (audioStudioPlayer) {
+                        audioStudioPlayer.src = data.stream_url;
+                        audioStudioPlayer.load();
+                        audioStudioPlayer.play().catch(() => {});
+                    }
+                    if (studioPlayerCard) studioPlayerCard.classList.remove("hidden");
+                    studioPlayerCard.scrollIntoView({ behavior: "smooth" });
+                    showToast("Áudio gerado com sucesso em 24-bit PCM!");
+                } else {
+                    showToast("Falha no processamento: " + (data.detail || "Erro desconhecido"));
+                }
+            } catch (err) {
+                showToast("Erro na comunicação com o servidor de áudio.");
+            } finally {
+                btnExecuteVoiceProcess.disabled = false;
+                btnExecuteVoiceText.textContent = originalText;
+            }
+        });
+    }
+
+    // Botão para abrir áudio processado
+    if (btnOpenProcessedFile) {
+        btnOpenProcessedFile.addEventListener("click", () => {
+            if (lastProcessedFilePath) {
+                openFolder(lastProcessedFilePath);
+            }
+        });
+    }
+
+    // =========================================================================
+    // Treinador de Voz (Applio Clonador)
+    // =========================================================================
+    if (sliderTrainEpochs && trainEpochsVal) {
+        sliderTrainEpochs.addEventListener("input", (e) => {
+            trainEpochsVal.textContent = `${e.target.value} épocas`;
+        });
+    }
+
+    if (btnBrowseTrainSource) {
+        btnBrowseTrainSource.addEventListener("click", async () => {
+            btnBrowseTrainSource.disabled = true;
+            try {
+                const resp = await fetch("/api/audio/select-file", { method: "POST" });
+                const data = await resp.json();
+                if (data.success && data.path) {
+                    inputTrainAudioSource.value = data.path;
+                    showToast("Gravação selecionada: " + (data.name || data.path));
+                }
+            } catch (e) {
+                showToast("Erro ao abrir seletor.");
+            } finally {
+                btnBrowseTrainSource.disabled = false;
+            }
+        });
+    }
+
+    if (btnUseDemoForTraining) {
+        btnUseDemoForTraining.addEventListener("click", () => {
+            if (audioDemoPath) {
+                inputTrainAudioSource.value = audioDemoPath;
+                showToast("Gravação demo carregada para treinamento!");
+            }
+        });
+    }
+
+    if (btnStartTraining) {
+        btnStartTraining.addEventListener("click", async () => {
+            const src = inputTrainAudioSource ? inputTrainAudioSource.value.trim() : "";
+            const modelName = inputTrainModelName ? inputTrainModelName.value.trim() : "";
+            if (!src) {
+                showToast("Selecione um arquivo de gravação vocal para o dataset!");
+                return;
+            }
+            if (!modelName) {
+                showToast("Informe um nome para o novo modelo de voz!");
+                return;
+            }
+
+            btnStartTraining.disabled = true;
+            btnStartTrainText.textContent = "Iniciando Treinamento...";
+            if (trainProgressCard) trainProgressCard.classList.remove("hidden");
+            if (trainProgressBar) trainProgressBar.style.width = "5%";
+            if (trainProgressPercent) trainProgressPercent.textContent = "5%";
+            if (trainProgressMsg) trainProgressMsg.textContent = "Preparando workspace acústico...";
+
+            try {
+                const payload = {
+                    audio_source: src,
+                    model_name: modelName,
+                    epochs: parseInt(sliderTrainEpochs.value),
+                    sample_rate: selTrainSampleRate ? selTrainSampleRate.value : "40k",
+                    f0_method: "rmvpe",
+                    denoise: chkTrainDenoise ? chkTrainDenoise.checked : true
+                };
+
+                const resp = await fetch("/api/audio/train-voice", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                const data = await resp.json();
+
+                if (resp.ok && data.success) {
+                    const taskId = data.task_id;
+                    showToast(`Treinamento de '${modelName}' iniciado em segundo plano!`);
+
+                    if (trainPollingInterval) clearInterval(trainPollingInterval);
+                    trainPollingInterval = setInterval(async () => {
+                        try {
+                            const statusResp = await fetch(`/api/audio/train-status/${taskId}`);
+                            const statusData = await statusResp.json();
+                            if (statusData) {
+                                const pct = statusData.percent || 0;
+                                if (trainProgressBar) trainProgressBar.style.width = `${pct}%`;
+                                if (trainProgressPercent) trainProgressPercent.textContent = `${pct}%`;
+                                if (trainProgressMsg) trainProgressMsg.textContent = statusData.message || "";
+
+                                if (statusData.status === "finished") {
+                                    clearInterval(trainPollingInterval);
+                                    btnStartTraining.disabled = false;
+                                    btnStartTrainText.textContent = "Iniciar Treinamento da Nova Voz";
+                                    showToast(`Voz '${modelName}' treinada e compilada com sucesso!`);
+                                    await loadAudioModels();
+                                    if (selRvcModel) selRvcModel.value = modelName;
+                                } else if (statusData.status === "error") {
+                                    clearInterval(trainPollingInterval);
+                                    btnStartTraining.disabled = false;
+                                    btnStartTrainText.textContent = "Iniciar Treinamento da Nova Voz";
+                                    showToast("Erro no treinamento: " + (statusData.error || "Falha"));
+                                }
+                            }
+                        } catch (e) {
+                            clearInterval(trainPollingInterval);
+                        }
+                    }, 1200);
+                } else {
+                    showToast("Erro ao iniciar treino: " + (data.detail || "Falha"));
+                    btnStartTraining.disabled = false;
+                    btnStartTrainText.textContent = "Iniciar Treinamento da Nova Voz";
+                }
+            } catch (e) {
+                showToast("Erro ao conectar com o orquestrador de treinamento.");
+                btnStartTraining.disabled = false;
+                btnStartTrainText.textContent = "Iniciar Treinamento da Nova Voz";
+            }
+        });
+    }
+
+    // Inicialização do Estúdio de Voz
+    loadAudioEngineStatus();
+    loadAudioModels();
 });

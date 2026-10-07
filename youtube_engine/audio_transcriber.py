@@ -86,8 +86,12 @@ class AudioTranscriptionEngine:
                 raise whisper_err
 
         finally:
-            # Se foi salvo em pasta temporária descartável, podemos manter ou limpar conforme necessário
-            pass
+            # Se foi salvo em pasta temporária descartável do sistema, limpa para evitar consumo de disco
+            if temp_dir is None and audio_path and os.path.exists(audio_path):
+                try:
+                    os.remove(audio_path)
+                except Exception:
+                    pass
 
     def _transcribe_with_whisper(self, audio_file: str) -> Tuple[List[TranscriptSnippet], str]:
         """Executa transcrição de fala com Faster-Whisper local."""
@@ -120,21 +124,29 @@ class AudioTranscriptionEngine:
         from google.genai import types
 
         client = genai.Client(api_key=self.gemini_key)
+        uploaded = None
         
-        # Faz upload do arquivo para o File API do Google Gemini
-        uploaded = client.files.upload(file=audio_file)
+        try:
+            # Faz upload do arquivo para o File API do Google Gemini
+            uploaded = client.files.upload(file=audio_file)
 
-        prompt = (
-            "Transcreva integralmente a fala contida neste áudio em português do Brasil. "
-            "Formate a saída estritamente em linhas no formato: "
-            "[MM:SS] Texto falado pelo orador. "
-            "Não adicione introduções nem conclusões, apenas as linhas com o timestamp e o texto falado."
-        )
+            prompt = (
+                "Transcreva integralmente a fala contida neste áudio em português do Brasil. "
+                "Formate a saída estritamente em linhas no formato: "
+                "[MM:SS] Texto falado pelo orador. "
+                "Não adicione introduções nem conclusões, apenas as linhas com o timestamp e o texto falado."
+            )
 
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=[uploaded, prompt]
-        )
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=[uploaded, prompt]
+            )
+        finally:
+            if uploaded is not None:
+                try:
+                    client.files.delete(name=uploaded.name)
+                except Exception:
+                    pass
 
         text_output = response.text or ""
         snippets: List[TranscriptSnippet] = []

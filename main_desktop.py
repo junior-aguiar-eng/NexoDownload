@@ -178,7 +178,19 @@ def main():
     except Exception:
         fallback_browser_mode(app_url)
 
-    # 4. Encerramento limpo
+    # 4. Encerramento limpo e gracioso com o backend
+    try:
+        req = urllib.request.Request(
+            f"{app_url}/api/shutdown",
+            data=b"{}",
+            headers={"Content-Type": "application/json", "User-Agent": "NexoDesktopClient/1.0"},
+            method="POST"
+        )
+        with urllib.request.urlopen(req, timeout=1.5):
+            pass
+    except Exception:
+        pass
+    time.sleep(0.3)
     os._exit(0)
 
 

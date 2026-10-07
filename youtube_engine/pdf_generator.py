@@ -21,12 +21,12 @@ def generate_study_pdf(
     paragraphs: List[ParagraphBlock],
     summary: SummaryReport,
     output_pdf_path: str
-) -> str:
+) -> Optional[str]:
     """
     Gera um PDF estruturado, editorial e elegante para impressão ou leitura digital.
     
     Retorna:
-        str: Caminho absoluto do PDF gerado.
+        Optional[str]: Caminho absoluto do PDF gerado ou None se indisponível.
     """
     html_content = _build_study_pdf_html(metadata, paragraphs, summary)
     out_path = Path(output_pdf_path).resolve()
@@ -39,8 +39,12 @@ def generate_study_pdf(
         if success and out_path.exists() and out_path.stat().st_size > 1000:
             return str(out_path)
 
-    # Tentativa 2: Fallback direto via PyMuPDF (biblioteca nativa instalada)
-    return _render_pdf_with_pymupdf(metadata, paragraphs, summary, str(out_path))
+    # Tentativa 2: Fallback direto via PyMuPDF (se biblioteca nativa estiver instalada)
+    res = _render_pdf_with_pymupdf(metadata, paragraphs, summary, str(out_path))
+    if res and out_path.exists() and out_path.stat().st_size > 0:
+        return str(out_path)
+
+    return None
 
 
 def _find_browser_executable() -> Optional[str]:
@@ -100,54 +104,60 @@ def _render_pdf_with_pymupdf(
     paragraphs: List[ParagraphBlock],
     summary: SummaryReport,
     output_pdf: str
-) -> str:
+) -> Optional[str]:
     """Fallback usando PyMuPDF para gerar o documento PDF diretamente."""
-    import pymupdf
+    try:
+        import pymupdf
+    except ImportError:
+        return None
 
-    doc = pymupdf.open()
-    page = doc.new_page(width=595, height=842) # A4
+    try:
+        doc = pymupdf.open()
+        page = doc.new_page(width=595, height=842) # A4
 
-    margin_left = 50
-    margin_top = 50
-    y = margin_top
+        margin_left = 50
+        margin_top = 50
+        y = margin_top
 
-    # Cabeçalho
-    page.insert_text((margin_left, y), "CADERNO DE ESTUDOS • MÉTODO CORNELL", fontsize=10, fontname="helv", color=(0.3, 0.4, 0.6))
-    y += 25
+        # Cabeçalho
+        page.insert_text((margin_left, y), "CADERNO DE ESTUDOS • MÉTODO CORNELL", fontsize=10, fontname="helv", color=(0.3, 0.4, 0.6))
+        y += 25
 
-    page.insert_text((margin_left, y), metadata.title[:75], fontsize=15, fontname="helv", color=(0.1, 0.15, 0.3))
-    y += 20
-    page.insert_text((margin_left, y), f"Canal: {metadata.channel_name} | Duração: {metadata.formatted_duration}", fontsize=9, fontname="helv", color=(0.4, 0.4, 0.4))
-    y += 30
+        page.insert_text((margin_left, y), metadata.title[:75], fontsize=15, fontname="helv", color=(0.1, 0.15, 0.3))
+        y += 20
+        page.insert_text((margin_left, y), f"Canal: {metadata.channel_name} | Duração: {metadata.formatted_duration}", fontsize=9, fontname="helv", color=(0.4, 0.4, 0.4))
+        y += 30
 
-    # Resumo
-    page.insert_text((margin_left, y), "RESUMO EXECUTIVO", fontsize=11, fontname="helv", color=(0.1, 0.4, 0.7))
-    y += 18
+        # Resumo
+        page.insert_text((margin_left, y), "RESUMO EXECUTIVO", fontsize=11, fontname="helv", color=(0.1, 0.4, 0.7))
+        y += 18
 
-    exec_text = summary.executive_summary[:400].replace("\n", " ") + "..."
-    rect = pymupdf.Rect(margin_left, y, 545, y + 80)
-    page.insert_textbox(rect, exec_text, fontsize=9, fontname="helv", color=(0.2, 0.2, 0.2))
-    y += 95
+        exec_text = summary.executive_summary[:400].replace("\n", " ") + "..."
+        rect = pymupdf.Rect(margin_left, y, 545, y + 80)
+        page.insert_textbox(rect, exec_text, fontsize=9, fontname="helv", color=(0.2, 0.2, 0.2))
+        y += 95
 
-    # Parágrafos da Transcrição
-    page.insert_text((margin_left, y), "NOTAS DE AULA E TRANSCRIÇÃO", fontsize=11, fontname="helv", color=(0.1, 0.4, 0.7))
-    y += 20
+        # Parágrafos da Transcrição
+        page.insert_text((margin_left, y), "NOTAS DE AULA E TRANSCRIÇÃO", fontsize=11, fontname="helv", color=(0.1, 0.4, 0.7))
+        y += 20
 
-    for p in paragraphs[:25]:
-        if y > 780:
-            page = doc.new_page(width=595, height=842)
-            y = margin_top
+        for p in paragraphs[:25]:
+            if y > 780:
+                page = doc.new_page(width=595, height=842)
+                y = margin_top
 
-        ts_text = f"[{p.format_timestamp()}] "
-        page.insert_text((margin_left, y), ts_text, fontsize=8, fontname="helv", color=(0.2, 0.4, 0.8))
-        
-        box_rect = pymupdf.Rect(margin_left + 45, y - 8, 545, y + 40)
-        page.insert_textbox(box_rect, p.text, fontsize=8, fontname="helv", color=(0.15, 0.15, 0.15))
-        y += 38
+            ts_text = f"[{p.format_timestamp()}] "
+            page.insert_text((margin_left, y), ts_text, fontsize=8, fontname="helv", color=(0.2, 0.4, 0.8))
+            
+            box_rect = pymupdf.Rect(margin_left + 45, y - 8, 545, y + 40)
+            page.insert_textbox(box_rect, p.text, fontsize=8, fontname="helv", color=(0.15, 0.15, 0.15))
+            y += 38
 
-    doc.save(output_pdf)
-    doc.close()
-    return output_pdf
+        doc.save(output_pdf)
+        doc.close()
+        return output_pdf
+    except Exception:
+        return None
 
 
 def _build_study_pdf_html(

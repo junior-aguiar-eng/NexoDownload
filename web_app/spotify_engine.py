@@ -52,10 +52,35 @@ def parse_spotify_url(url: str) -> Dict[str, str]:
     return {"type": "unknown", "id": ""}
 
 
+import time
+
+def _fetch_url_with_retry(url: str, timeout: float = 8.0, retries: int = 2) -> Optional[str]:
+    """Realiza requisições HTTP com retry exponencial e cabeçalhos modernos."""
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+    }
+    for attempt in range(retries + 1):
+        try:
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                if resp.status == 200:
+                    return resp.read().decode("utf-8", errors="ignore")
+        except urllib.error.HTTPError as he:
+            if he.code in [429, 500, 502, 503, 504]:
+                time.sleep(0.8 * (attempt + 1))
+            else:
+                break
+        except Exception:
+            if attempt < retries:
+                time.sleep(0.5 * (attempt + 1))
+    return None
+
 def fetch_spotify_collection_tracks(url: str) -> Optional[Dict[str, Any]]:
     """
     Extrai a lista de faixas de um Álbum ou Playlist do Spotify via endpoint oficial de Embed.
-    Retorna nome da coleção, artista, capa e a lista de faixas individuais.
+    Retorna nome da coleção, artista, capa e a lista de faixas individuais com resiliência.
     """
     parsed = parse_spotify_url(url)
     if parsed["type"] not in ["album", "playlist"]:
@@ -66,12 +91,9 @@ def fetch_spotify_collection_tracks(url: str) -> Optional[Dict[str, Any]]:
     embed_url = f"https://open.spotify.com/embed/{resource_type}/{resource_id}"
     
     try:
-        req = urllib.request.Request(
-            embed_url,
-            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-        )
-        with urllib.request.urlopen(req, timeout=10.0) as resp:
-            html = resp.read().decode("utf-8", errors="ignore")
+        html = _fetch_url_with_retry(embed_url, timeout=10.0, retries=2)
+        if not html:
+            return None
             
         match = re.search(r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>', html)
         if not match:

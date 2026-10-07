@@ -8,7 +8,8 @@ ROOT_DIR = Path(SPECPATH).resolve()
 datas = [
     (str(ROOT_DIR / 'web_app' / 'templates'), 'web_app/templates'),
     (str(ROOT_DIR / 'web_app' / 'static'), 'web_app/static'),
-    (str(ROOT_DIR / 'web_app'), 'web_app')
+    (str(ROOT_DIR / 'web_app'), 'web_app'),
+    (str(ROOT_DIR / 'audio_engine'), 'audio_engine')
 ]
 binaries = []
 hiddenimports = [
@@ -19,11 +20,19 @@ hiddenimports = [
     'web_app.audio_processor',
     'web_app.security_engine',
     'web_app.updater_engine',
+    'audio_engine',
+    'audio_engine.voice_modifier',
+    'audio_engine.voice_trainer',
+    'soundfile',
+    'stftpitchshift',
+    'noisereduce',
+    'scipy',
+    'scipy.signal',
     'pythonnet',
     'clr_loader'
 ]
 
-for pkg in ['web_app', 'fastapi', 'uvicorn', 'yt_dlp', 'starlette', 'pydantic', 'websockets', 'mutagen', 'webview']:
+for pkg in ['web_app', 'audio_engine', 'fastapi', 'uvicorn', 'yt_dlp', 'starlette', 'pydantic', 'websockets', 'mutagen', 'webview', 'soundfile', 'stftpitchshift', 'noisereduce']:
     tmp_ret = collect_all(pkg)
     datas += tmp_ret[0]
     binaries += tmp_ret[1]

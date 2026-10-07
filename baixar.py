@@ -57,12 +57,53 @@ def sanitize_filename(name: str, max_length: int = 100) -> str:
     """Higieniza o nome do arquivo para compatibilidade total no Windows/Linux/macOS."""
     if not name:
         return "midia_download"
-    cleaned = re.sub(r'[<>:"/\\|?*()]', '_', name)
+    # Remove caracteres de controle ASCII (< 32)
+    cleaned = "".join(ch for ch in name if ord(ch) >= 32)
+    # Substitui caracteres ilegais no Windows por underscore
+    cleaned = re.sub(r'[<>:"/\\|?*()\[\]]', '_', cleaned)
     cleaned = re.sub(r'_+', '_', cleaned)
     cleaned = " ".join(cleaned.split()).strip('._ ')
+
+    # Protege nomes de dispositivos reservados no Windows
+    reserved = {
+        "CON", "PRN", "AUX", "NUL",
+        "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+        "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
+    }
+    stem_check = cleaned.split(".")[0].upper()
+    if stem_check in reserved:
+        cleaned = f"_{cleaned}_"
+
     if len(cleaned) > max_length:
         cleaned = cleaned[:max_length].rstrip('._ ')
     return cleaned or "midia_download"
+
+
+def find_ffmpeg_path() -> Optional[str]:
+    """Localiza o binário do FFmpeg no PATH, pastas de projeto ou diretórios padrão do Windows."""
+    try:
+        from youtube_engine.downloader import find_ffmpeg_path as yt_find_ffmpeg
+        p = yt_find_ffmpeg()
+        if p:
+            return p
+    except Exception:
+        pass
+
+    ff_which = shutil.which("ffmpeg")
+    if ff_which:
+        return ff_which
+
+    base_dir = Path(__file__).resolve().parent
+    candidates = [
+        base_dir / "ffmpeg.exe",
+        base_dir / "bin" / "ffmpeg.exe",
+        base_dir / "_internal" / "bin" / "ffmpeg.exe",
+        base_dir / "tools" / "ffmpeg.exe",
+    ]
+    for c in candidates:
+        if c.is_file():
+            return str(c)
+    return None
 
 
 def detect_platform_name(url: str, extractor_key: Optional[str] = None) -> str:
@@ -138,15 +179,21 @@ def download_single_media(
     target_dir = Path(base_downloads_dir).resolve() / platform
     target_dir.mkdir(parents=True, exist_ok=True)
 
-    has_ffmpeg = shutil.which("ffmpeg") is not None
+    ffmpeg_bin = find_ffmpeg_path()
+    has_ffmpeg = ffmpeg_bin is not None
 
-    # Configuração de opções otimizadas do yt-dlp
+    # Configuração de opções otimizadas e resilientes do yt-dlp
     ydl_opts: Dict[str, Any] = {
         "noplaylist": True,  # Proteção ativa: nunca baixa a playlist toda sem autorização
         "quiet": True,
         "no_warnings": True,
         "concurrent_fragment_downloads": 8,
+        "retries": 3,
+        "fragment_retries": 5,
+        "socket_timeout": 15,
     }
+    if ffmpeg_bin:
+        ydl_opts["ffmpeg_location"] = ffmpeg_bin
 
     if media_type == "audio":
         ydl_opts.update({

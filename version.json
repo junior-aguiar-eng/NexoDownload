@@ -1,16 +1,16 @@
 {
-  "version": "2.1.0",
-  "min_required_version": "2.0.0",
-  "title": "Nexo Download Pro v2.1.0",
-  "release_date": "2026-09-21",
+  "version": "2.2.0",
+  "min_required_version": "2.1.0",
+  "title": "Nexo Download Pro v2.2.0 - Edição Confiabilidade e Robustez",
+  "release_date": "2026-10-06",
   "changelog": [
-    "Compilação C Nativa (.pyd via Cython + MSVC) contra engenharia reversa",
-    "Sistema de Licenciamento Criptográfico HWID-Locked com gerador de chaves",
-    "Download de álbuns e playlists completas (Spotify e Apple Music) em faixas separadas + álbum contínuo",
-    "Metadados completos e capas HD atômicas em vídeos MP4 compatíveis com Windows Explorer",
-    "Modal de Perfil, Seletor Nativo de Pastas do Windows Explorer e 5 temas dinâmicos",
-    "Instalador minimalista estilo Spotify/Discord sem poluição de arquivos",
-    "Sistema de atualização silenciosa em 1-clique integrada"
+    "Motor com cancelamento instantâneo cooperativo e limpeza de arquivos residuais (.part, .ytdl)",
+    "Blindagem estrita contra nomes de dispositivos reservados (CON, PRN, AUX, etc.) e caminhos críticos do Windows",
+    "Timeouts preventivos no processamento FFmpeg evitando travamento de threads em segundo plano",
+    "Escrita atômica do catálogo central (.catalogo_index.json) prevenindo corrupção em interrupções",
+    "Rate limiting anti-força bruta e auto-bloqueio por inatividade na Sessão Privê",
+    "Descoberta dinâmica e unificada de binários FFmpeg com fallback resiliente de rede",
+    "Encerramento sincronizado e gracioso entre a janela desktop e o servidor backend"
   ],
   "download_url": "https://github.com/junior-aguiar-eng/NexoDownload/releases/latest/download/NexoDownload-Setup.exe"
 }

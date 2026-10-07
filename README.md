@@ -72,6 +72,12 @@ Diferente de baixadores convencionais, o Nexo Download integra **injeção atôm
 - Sem banner de CD dos anos 90, sem botões de assistente e sem rodapé de copyright.
 - **Fechamento Instantâneo:** Ao atingir 100%, fecha a janela do instalador automaticamente e já abre o aplicativo na hora.
 
+### 9. 🎙️ Estúdio de Voz & IA (DSP + RVC Neural + Applio Clonador)
+- **Motor 1 (DSP Tradicional):** Transposição de tom e ajuste timbral de formantes independentes via STFT vocoder (`stftpitchshift`) evitando artificialidades ("efeito esquilo"), com redução espectral estática de ruído (`noisereduce`). Presets prontos como Voz Grave, Agudo Natural, Locutor de Rádio e Personalizado.
+- **Motor 2 (RVC IA Neural):** Conversão vocal hiper-realista baseada em modelos RVC v2 (`.pth`) e recuperação tímbrica por índice vetorial FAISS (`.index`) via algoritmo RMVPE, com aceleração automática por GPU (CUDA) e fallback para CPU.
+- **Treinador de Voz Acoplado (Applio):** Pipeline nativo para criação de novas vozes personalizadas a partir de gravações curtas (5 a 15 min), fatiamento acústico, extração de embeddings e compilação direta na pasta de modelos do app.
+- **Player de Áudio Integrado:** Reprodutor HTML5 embutido na interface gráfica com streaming em tempo real e exportação WAV 24-bit PCM em alta resolução.
+
 ---
 
 ## 🌐 Plataformas Suportadas

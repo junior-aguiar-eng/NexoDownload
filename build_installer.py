@@ -157,6 +157,17 @@ def step2_bundle_dependencies() -> bool:
     if ico_src.exists():
         shutil.copy2(ico_src, dist_dir / "app_icon.ico")
 
+    # Garante acoplamento do módulo audio_engine e pastas de modelos
+    audio_engine_src = BASE_DIR / "audio_engine"
+    if audio_engine_src.exists():
+        for target_ae in [dist_dir / "audio_engine", dist_dir / "_internal" / "audio_engine"]:
+            target_ae.mkdir(parents=True, exist_ok=True)
+            for item in audio_engine_src.iterdir():
+                if item.is_file() and not item.name.endswith(".pyc"):
+                    shutil.copy2(item, target_ae / item.name)
+            (target_ae / "modelos").mkdir(parents=True, exist_ok=True)
+        print("[+] Módulo de áudio & IA acoplado no pacote de distribuição.")
+
     return True
 
 

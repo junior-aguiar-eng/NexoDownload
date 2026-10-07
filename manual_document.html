@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Manual do Usuário - Nexo Download Pro & Estúdio de Voz IA</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+        @page {
+            size: A4;
+            margin: 14mm 14mm 14mm 14mm;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #1e293b;
+            background-color: #ffffff;
+            line-height: 1.5;
+            font-size: 9.8pt;
+            margin: 0;
+            padding: 0;
+        }
+
+        .page-break {
+            page-break-before: always;
+        }
+
+        .no-break {
+            page-break-inside: avoid;
+        }
+
+        /* HEADER E FOOTER DE PÁGINA */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 6px;
+            margin-bottom: 16px;
+            font-size: 8pt;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .page-header-brand {
+            color: #059669;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .page-footer {
+            margin-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 8pt;
+            color: #94a3b8;
+        }
+
+        /* ================================================================= */
+        /* CAPA */
+        /* ================================================================= */
+        .cover {
+            height: 260mm;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px 10px;
+            background: radial-gradient(circle at top right, rgba(16, 185, 129, 0.08), transparent 50%),
+                        radial-gradient(circle at bottom left, rgba(5, 150, 105, 0.05), transparent 40%);
+        }
+
+        .cover-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .cover-logo-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #10b981, #047857);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+            color: white;
+            font-weight: 800;
+            font-size: 28px;
+        }
+
+        .cover-brand-title {
+            font-size: 22pt;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: -0.5px;
+        }
+
+        .cover-badge-tech {
+            display: inline-block;
+            background: #dcfce7;
+            color: #15803d;
+            padding: 3px 12px;
+            border-radius: 999px;
+            font-size: 8.5pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 4px;
+        }
+
+        .cover-main {
+            margin: auto 0;
+        }
+
+        .cover-tagline {
+            color: #10b981;
+            font-size: 12pt;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+        }
+
+        .cover-title {
+            font-size: 32pt;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.15;
+            letter-spacing: -1px;
+            margin: 0 0 18px 0;
+        }
+
+        .cover-title span {
+            background: linear-gradient(135deg, #10b981, #059669);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .cover-description {
+            font-size: 12pt;
+            color: #475569;
+            max-width: 95%;
+            line-height: 1.6;
+            margin-bottom: 26px;
+        }
+
+        .cover-feature-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .feature-pill {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 9pt;
+            font-weight: 600;
+            color: #334155;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .feature-pill-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+        }
+
+        .cover-footer {
+            border-top: 2px solid #e2e8f0;
+            padding-top: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            font-size: 9pt;
+            color: #64748b;
+        }
+
+        .cover-footer-meta {
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        /* ================================================================= */
+        /* TIPOGRAFIA & CABEÇALHOS */
+        /* ================================================================= */
+        h1 {
+            font-size: 18pt;
+            font-weight: 800;
+            color: #0f172a;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 6px;
+            margin-top: 0;
+            margin-bottom: 14px;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h1 .chap-num {
+            background: #10b981;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 6px;
+            font-size: 11pt;
+            font-weight: 800;
+        }
+
+        h2 {
+            font-size: 12.5pt;
+            font-weight: 700;
+            color: #1e293b;
+            margin-top: 18px;
+            margin-bottom: 10px;
+            border-left: 4px solid #10b981;
+            padding-left: 10px;
+        }
+
+        h3 {
+            font-size: 10.5pt;
+            font-weight: 700;
+            color: #334155;
+            margin-top: 12px;
+            margin-bottom: 6px;
+        }
+
+        p {
+            margin: 0 0 10px 0;
+            color: #334155;
+            text-align: justify;
+        }
+
+        ul, ol {
+            margin: 0 0 12px 0;
+            padding-left: 22px;
+            color: #334155;
+        }
+
+        li {
+            margin-bottom: 5px;
+        }
+
+        strong {
+            color: #0f172a;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            background: #f1f5f9;
+            color: #0f766e;
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-size: 8.5pt;
+            font-weight: 600;
+        }
+
+        pre {
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 8.5pt;
+            overflow-x: auto;
+            margin: 8px 0 12px 0;
+            border-left: 4px solid #10b981;
+        }
+
+        /* ================================================================= */
+        /* CARDS, CALLOUTS E PASSOS */
+        /* ================================================================= */
+        .callout {
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin: 12px 0;
+            display: flex;
+            gap: 12px;
+            page-break-inside: avoid;
+        }
+
+        .callout-info {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-left: 4px solid #10b981;
+        }
+
+        .callout-warning {
+            background: #fffbeb;
+            border: 1px solid #fef3c7;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .callout-tip {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .callout-icon {
+            font-size: 14pt;
+            line-height: 1;
+        }
+
+        .callout-body {
+            flex: 1;
+        }
+
+        .callout-title {
+            font-weight: 700;
+            font-size: 9.5pt;
+            margin-bottom: 2px;
+            color: #0f172a;
+        }
+
+        .callout-body p {
+            margin: 0;
+            font-size: 9pt;
+        }
+
+        /* TABELAS */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0 14px 0;
+            font-size: 9pt;
+            page-break-inside: avoid;
+        }
+
+        th {
+            background: #f8fafc;
+            color: #0f172a;
+            font-weight: 700;
+            text-align: left;
+            padding: 8px 10px;
+            border-bottom: 2px solid #cbd5e1;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        td {
+            padding: 7px 10px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #334155;
+            vertical-align: top;
+        }
+
+        tr:nth-child(even) td {
+            background: #fafafa;
+        }
+
+        /* PASSOS NUMERADOS */
+        .steps-container {
+            margin: 12px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .step-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px 12px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            page-break-inside: avoid;
+        }
+
+        .step-number {
+            width: 26px;
+            height: 26px;
+            background: #10b981;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 10pt;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-title {
+            font-weight: 700;
+            font-size: 9.8pt;
+            color: #0f172a;
+            margin-bottom: 2px;
+        }
+
+        .step-text {
+            font-size: 8.8pt;
+            color: #475569;
+            margin: 0;
+        }
+
+        /* DIAGRAMA DE FLUXO VISUAL */
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #0f172a;
+            color: white;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin: 14px 0;
+            page-break-inside: avoid;
+        }
+
+        .flow-node {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 8px 12px;
+            text-align: center;
+            flex: 1;
+        }
+
+        .flow-node-title {
+            font-weight: 700;
+            font-size: 8.5pt;
+            color: #34d399;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .flow-node-sub {
+            font-size: 7.5pt;
+            color: #94a3b8;
+            margin-top: 2px;
+        }
+
+        .flow-arrow {
+            color: #10b981;
+            font-weight: 800;
+            font-size: 14pt;
+            padding: 0 8px;
+        }
+
+        /* GRID DE PRESETS */
+        .preset-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 10px 0;
+            page-break-inside: avoid;
+        }
+
+        .preset-card {
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .preset-name {
+            font-weight: 700;
+            color: #047857;
+            font-size: 9.3pt;
+            margin-bottom: 3px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .preset-desc {
+            font-size: 8.3pt;
+            color: #475569;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        /* SUMÁRIO */
+        .toc-list {
+            list-style: none;
+            padding: 0;
+            margin: 16px 0;
+        }
+
+        .toc-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px dashed #cbd5e1;
+            font-size: 9.5pt;
+        }
+
+        .toc-item-title {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .toc-item-chap {
+            color: #10b981;
+            font-weight: 700;
+            margin-right: 8px;
+        }
+
+        /* MOCKUP DA INTERFACE */
+        .ui-mockup-box {
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 12px;
+            color: #e2e8f0;
+            margin: 10px 0;
+            border: 1px solid #334155;
+            page-break-inside: avoid;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 8pt;
+        }
+
+        .ui-mockup-header {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .ui-circle {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ================================================================= -->
+    <!-- CAPA -->
+    <!-- ================================================================= -->
+    <div class="cover">
+        <div class="cover-header">
+            <div class="cover-logo-icon">N</div>
+            <div>
+                <div class="cover-brand-title">Nexo Download Pro</div>
+                <div class="cover-badge-tech">Edição 2.2.0 • Build Windows Oficial</div>
+            </div>
+        </div>
+
+        <div class="cover-main">
+            <div class="cover-tagline">Manual Didático & Guia de Engenharia Acústica</div>
+            <h1 class="cover-title">Guia Prático Passo a Passo: <span>Operação, Downloads & Estúdio de Voz IA</span></h1>
+            <p class="cover-description">
+                Aprenda a instalar, ativar e extrair o potencial máximo do Nexo Download.
+                Domine desde os downloads multimídia de alta fidelidade até a engenharia acústica de
+                modulação vocal em tempo real e conversão de timbre por Inteligência Artificial Neural (RVC v2 & Applio).
+            </p>
+
+            <div class="cover-feature-pills">
+                <div class="feature-pill"><div class="feature-pill-dot"></div>Instalação Autônoma (Zero Dependências)</div>
+                <div class="feature-pill"><div class="feature-pill-dot"></div>Segurança HWID-Lock Criptográfica</div>
+                <div class="feature-pill"><div class="feature-pill-dot"></div>Motor 1: DSP Clássico com Formantes</div>
+                <div class="feature-pill"><div class="feature-pill-dot"></div>Motor 2: RVC IA Neural com RMVPE</div>
+                <div class="feature-pill"><div class="feature-pill-dot"></div>Treinamento de Modelos de Voz</div>
+            </div>
+        </div>
+
+        <div class="cover-footer">
+            <div>
+                <div class="cover-footer-meta">Autor: Nexo Digital Studio</div>
+                <div>Documentação Oficial de Engenharia e Operação</div>
+            </div>
+            <div style="text-align: right;">
+                <div class="cover-footer-meta">Ambiente Windows 10/11 x64</div>
+                <div>Suporte a Aceleração CUDA & Processamento CPU</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- SUMÁRIO -->
+    <!-- ================================================================= -->
+    <div class="page-break"></div>
+    <div class="page-header">
+        <span class="page-header-brand">Nexo Download Pro • Manual Oficial</span>
+        <span>Sumário Geral</span>
+    </div>
+
+    <h1><span class="chap-num">0</span> Sumário do Manual</h1>
+    <p>Este manual foi estruturado de forma didática e progressiva: dos fundamentos operacionais básicos até as técnicas avançadas de processamento acústico e IA neural.</p>
+
+    <ul class="toc-list">
+        <li class="toc-item">
+            <span class="toc-item-title"><span class="toc-item-chap">Capítulo 1</span> Instalação e Execução Descomplicada</span>
+            <span>Página 3</span>
+        </li>
+        <li class="toc-item">
+            <span class="toc-item-title"><span class="toc-item-chap">Capítulo 2</span> Ativação e Gerenciamento de Licenças (HWID)</span>
+            <span>Página 4</span>
+        </li>
+        <li class="toc-item">
+            <span class="toc-item-title"><span class="toc-item-chap">Capítulo 3</span> Módulo de Downloads Multimídia & Conversão</span>
+            <span>Página 5</span>
+        </li>
+        <li class="toc-item">
+            <span class="toc-item-title"><span class="toc-item-chap">Capítulo 4</span> Estúdio de Voz: Fundamentos Acústicos Desmistificados</span>
+            <span>Página 6</span>
+        </li>
+        <li class="toc-item">
+            <span class="toc-item-title"><span class="toc-item-chap">Capítulo 5</span> Motor 1 (DSP Tradicional): Formantes, Pitch e Denoise</span>
+            <span>Página 7</span>
+        </li>
+        <li class="toc-item">
+            <span class="toc-item-title"><span class="toc-item-chap">Capítulo 6</span> Motor 2 (RVC IA Neural): Conversão de Timbre Realista</span>
+            <span>Página 8</span>
+        </li>
+        <li class="toc-item">
+            <span class="toc-item-title"><span class="toc-item-chap">Capítulo 7</span> Treinamento de Novas Vozes (Applio Engine Integrado)</span>
+            <span>Página 9</span>
+        </li>
+        <li class="toc-item">
+            <span class="toc-item-title"><span class="toc-item-chap">Capítulo 8</span> Dicas de Ouro, Solução de Problemas & FAQ</span>
+            <span>Página 10</span>
+        </li>
+    </ul>
+
+    <div class="callout callout-info">
+        <div class="callout-icon">💡</div>
+        <div class="callout-body">
+            <div class="callout-title">Como aproveitar melhor este guia</div>
+            <p>Se você deseja apenas baixar conteúdos da internet, consulte os Capítulos 1 a 3. Se o seu objetivo é produção musical, dublagem, podcasts ou transformação de voz para criação de conteúdo anônimo, dedique atenção especial aos Capítulos 4, 5 e 6.</p>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- CAPÍTULO 1 -->
+    <!-- ================================================================= -->
+    <div class="page-break"></div>
+    <div class="page-header">
+        <span class="page-header-brand">Nexo Download Pro • Manual Oficial</span>
+        <span>Capítulo 1 • Instalação</span>
+    </div>
+
+    <h1><span class="chap-num">1</span> Instalação e Execução Descomplicada</h1>
+    
+    <p>O <strong>Nexo Download Pro</strong> foi empacotado sob uma arquitetura totalmente autossuficiente (<em>Standalone Portable Bundle</em>). Isso significa que qualquer usuário pode executá-lo em qualquer máquina Windows sem realizar configurações prévias complexas.</p>
+
+    <h2>1.1 Requisitos do Sistema</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Componente</th>
+                <th>Requisito Mínimo (CPU)</th>
+                <th>Requisito Recomendado (IA / GPU)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Sistema Operacional</strong></td>
+                <td>Windows 10 ou 11 (64 bits)</td>
+                <td>Windows 11 (64 bits) atualizado</td>
+            </tr>
+            <tr>
+                <td><strong>Processador (CPU)</strong></td>
+                <td>Intel Core i3 / AMD Ryzen 3 (Quad-Core)</td>
+                <td>Intel Core i5/i7 ou AMD Ryzen 5/7 (6+ núcleos)</td>
+            </tr>
+            <tr>
+                <td><strong>Memória RAM</strong></td>
+                <td>4 GB de RAM</td>
+                <td>8 GB a 16 GB de RAM</td>
+            </tr>
+            <tr>
+                <td><strong>Placa de Vídeo (GPU)</strong></td>
+                <td>Vídeo Integrado (processamento em CPU)</td>
+                <td>NVIDIA GeForce GTX 1660 / RTX Series (CUDA)</td>
+            </tr>
+            <tr>
+                <td><strong>Espaço em Disco</strong></td>
+                <td>1.5 GB livres</td>
+                <td>5 GB livres (para modelos e áudios de treino)</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>1.2 Passo a Passo da Instalação</h2>
+    <div class="steps-container">
+        <div class="step-card">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <div class="step-title">Obtenha o instalador oficial</div>
+                <p class="step-text">Você precisa apenas do arquivo executável único <code>NexoDownload-Setup.exe</code> (~213 MB). Não são necessários pacotes adicionais.</p>
+            </div>
+        </div>
+
+        <div class="step-card">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <div class="step-title">Execute o instalador</div>
+                <p class="step-text">Dê dois cliques no arquivo. O instalador executa no escopo de usuário (não exige privilégios de Administrador) e realiza a descompressão dos binários em <code>%LOCALAPPDATA%\Programs\NexoDownload</code>.</p>
+            </div>
+        </div>
+
+        <div class="step-card">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <div class="step-title">Início Automático</div>
+                <p class="step-text">O atalho oficial "Nexo Download" é criado na sua <strong>Área de Trabalho</strong> e no <strong>Menu Iniciar</strong>. O aplicativo abre sua interface gráfica imediatamente após a instalação.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="callout callout-warning">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-body">
+            <div class="callout-title">Aviso do Windows SmartScreen</div>
+            <p>Por ser um software de distribuição direta recente, o Windows pode exibir a tela azul informativa <em>"O Windows protegeu o seu computador"</em>. Basta clicar em <strong>"Mais informações"</strong> e depois em <strong>"Executar assim mesmo"</strong>.</p>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- CAPÍTULO 2 -->
+    <!-- ================================================================= -->
+    <div class="page-break"></div>
+    <div class="page-header">
+        <span class="page-header-brand">Nexo Download Pro • Manual Oficial</span>
+        <span>Capítulo 2 • Licenciamento HWID</span>
+    </div>
+
+    <h1><span class="chap-num">2</span> Ativação e Gerenciamento de Licenças (HWID)</h1>
+
+    <p>O Nexo Download conta com uma camada de segurança criptográfica nativa compilada em C (Cython). O sistema utiliza <strong>HWID-Lock</strong> (trava de hardware), assegurando que cada licença pertença exclusivamente ao computador autorizado.</p>
+
+    <h2>2.1 O que acontece ao abrir o aplicativo pela primeira vez</h2>
+    <p>O aplicativo detecta automaticamente que não há uma licença ativa e apresenta o modal moderno de bloqueio com o identificador da máquina:</p>
+
+    <div class="steps-container">
+        <div class="step-card">
+            <div class="step-number">A</div>
+            <div class="step-content">
+                <div class="step-title">Visualização do ID da Máquina</div>
+                <p class="step-text">O aplicativo gera e exibe o identificador único do computador no formato: <code>NEXO-XXXX-XXXX-XXXX</code> (onde as letras e números representam o hash seguro da placa e componentes físicos).</p>
+            </div>
+        </div>
+
+        <div class="step-card">
+            <div class="step-number">B</div>
+            <div class="step-content">
+                <div class="step-title">Envio do ID ao Administrador</div>
+                <p class="step-text">O usuário clica no botão <strong>"Copiar ID"</strong> e envia esse código para você (o administrador da licença) via WhatsApp, e-mail ou mensagem.</p>
+            </div>
+        </div>
+
+        <div class="step-card">
+            <div class="step-number">C</div>
+            <div class="step-content">
+                <div class="step-title">Geração da Chave Criptográfica</div>
+                <p class="step-text">No seu computador administrador, execute o gerador incluído na raiz do projeto:</p>
+                <pre>python gerador_licencas.py</pre>
+                <p class="step-text">Cole o ID recebido, selecione o período desejado (ex: Vitalícia / Permanente) e o script emitirá a chave oficial correspondente.</p>
+            </div>
+        </div>
+
+        <div class="step-card">
+            <div class="step-number">D</div>
+            <div class="step-content">
+                <div class="step-title">Inserção e Desbloqueio Permanente</div>
+                <p class="step-text">O usuário cola a chave no campo <strong>"Chave de Ativação"</strong> e clica em <strong>"Ativar e Entrar no Nexo"</strong>. O arquivo de licença criptografado é gravado em disco e a aplicação fica liberada permanentemente.</p>
+            </div>
+        </div>
+    </div>
+
+    <h2>2.2 Tipos de Licença Suportados</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Tipo de Plano</th>
+                <th>Código de Expiração</th>
+                <th>Comportamento no Cliente</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Vitalícia (Permanente)</strong></td>
+                <td>99991231</td>
+                <td>Acesso perpétuo a todos os módulos e atualizações, sem data limite.</td>
+            </tr>
+            <tr>
+                <td><strong>Periódica (30 Dias)</strong></td>
+                <td>Data dinâmica (+30d)</td>
+                <td>Ideal para avaliações e assinaturas mensais. Bloqueia após 30 dias.</td>
+            </tr>
+            <tr>
+                <td><strong>Periódica (6 Meses / 1 Ano)</strong></td>
+                <td>Data dinâmica</td>
+                <td>Licenciamento semestral ou anual com aviso de expiração no painel.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- ================================================================= -->
+    <!-- CAPÍTULO 3 -->
+    <!-- ================================================================= -->
+    <div class="page-break"></div>
+    <div class="page-header">
+        <span class="page-header-brand">Nexo Download Pro • Manual Oficial</span>
+        <span>Capítulo 3 • Downloads Multimídia</span>
+    </div>
+
+    <h1><span class="chap-num">3</span> Módulo de Downloads Multimídia & Conversão</h1>
+
+    <p>O Nexo Download é uma central completa de extração e conversão de mídia digital das maiores plataformas do mundo com motor assíncrono de alta performance.</p>
+
+    <h2>3.1 Plataformas Suportadas</h2>
+    <ul>
+        <li><strong>YouTube:</strong> Vídeos individuais, Shorts, Playlists completas de centenas de vídeos e canais inteiros.</li>
+        <li><strong>Spotify & Apple Music:</strong> Busca automatizada de alta fidelidade das faixas em áudio 320 kbps com preenchimento de capa e metadados oficiais ID3.</li>
+        <li><strong>Redes Sociais:</strong> Instagram (Reels e postagens), TikTok (sem marca d'água), Twitter/X, Facebook Vídeos.</li>
+        <li><strong>Plataformas de Áudio:</strong> SoundCloud, Bandcamp, Mixcloud.</li>
+        <li><strong>Sessão Privê:</strong> Módulo com cofre criptografado para conteúdos confidenciais com proteção por senha <em>Zero-Knowledge</em>.</li>
+    </ul>
+
+    <h2>3.2 Passo a Passo para Baixar Mídia</h2>
+    <div class="steps-container">
+        <div class="step-card">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <div class="step-title">Cole o link (URL)</div>
+                <p class="step-text">Insira o link copiado no campo principal do topo. O Nexo detecta a plataforma instantaneamente.</p>
+            </div>
+        </div>
+
+        <div class="step-card">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <div class="step-title">Escolha o Tipo e Formato</div>
+                <p class="step-text">
+                    • <strong>Vídeo:</strong> Selecione MP4 ou MKV e a resolução desejada (720p, 1080p Full HD, 4K UHD).<br>
+                    • <strong>Apenas Áudio:</strong> Selecione MP3 (320kbps), FLAC (lossless sem perdas), WAV, M4A ou OPUS.
+                </p>
+            </div>
+        </div>
+
+        <div class="step-card">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <div class="step-title">Defina a Pasta de Destino</div>
+                <p class="step-text">Clique em <strong>"Escolher Pasta"</strong> para apontar qualquer diretório do seu computador de forma nativa.</p>
+            </div>
+        </div>
+
+        <div class="step-card">
+            <div class="step-number">4</div>
+            <div class="step-content">
+                <div class="step-title">Acompanhe a Barra de Progresso</div>
+                <p class="step-text">O download e a multiplexação de áudio/vídeo são executados em segundo plano com indicação em tempo real de velocidade e porcentagem.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- CAPÍTULO 4 -->
+    <!-- ================================================================= -->
+    <div class="page-break"></div>
+    <div class="page-header">
+        <span class="page-header-brand">Nexo Download Pro • Manual Oficial</span>
+        <span>Capítulo 4 • Fundamentos Acústicos</span>
+    </div>
+
+    <h1><span class="chap-num">4</span> Estúdio de Voz: Fundamentos Acústicos Desmistificados</h1>
+
+    <p>Para obter resultados profissionais na edição de voz, é fundamental compreender como a física acústica funciona. A voz humana não é apenas uma frequência simples, mas sim um conjunto complexo de ressonâncias.</p>
+
+    <div class="flow-diagram">
+        <div class="flow-node">
+            <div class="flow-node-title">Sinal Bruto</div>
+            <div class="flow-node-sub">Microfone / WAV</div>
+        </div>
+        <div class="flow-arrow">➔</div>
+        <div class="flow-node">
+            <div class="flow-node-title">Motor 1: DSP</div>
+            <div class="flow-node-sub">Pitch + Formantes</div>
+        </div>
+        <div class="flow-arrow">➔</div>
+        <div class="flow-node">
+            <div class="flow-node-title">Motor 2: RVC IA</div>
+            <div class="flow-node-sub">RMVPE + Rede Neural</div>
+        </div>
+        <div class="flow-arrow">➔</div>
+        <div class="flow-node">
+            <div class="flow-node-title">Master Final</div>
+            <div class="flow-node-sub">Waveform 48kHz</div>
+        </div>
+    </div>
+
+    <h2>4.1 Os Três Pilares da Voz Humana</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Pilar Acústico</th>
+                <th>O que é no mundo físico?</th>
+                <th>Como afeta a percepção do ouvinte?</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Pitch (Frequência Fundamental - F0)</strong></td>
+                <td>A velocidade com que as cordas vocais vibram por segundo (em Hertz).</td>
+                <td>Define a nota musical: se a voz soa <strong>grave</strong> (grossa) ou <strong>aguda</strong> (fina).</td>
+            </tr>
+            <tr>
+                <td><strong>Formantes (Ressonância Trato Vocal)</strong></td>
+                <td>As cavidades da garganta, boca e nariz que amplificam certas frequências harmônicas.</td>
+                <td>Define a <strong>dimensão anatômica</strong>: se parece que a voz vem de uma pessoa alta, baixa, homem, mulher ou criança.</td>
+            </tr>
+            <tr>
+                <td><strong>Timbre & Articulação</strong></td>
+                <td>A textura, o ar, a aspereza e a forma única como os lábios e a língua pronunciam consoantes.</td>
+                <td>A "identidade digital" da pessoa. É o que faz você reconhecer a voz de um amigo ao telefone.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="callout callout-tip">
+        <div class="callout-icon">💡</div>
+        <div class="callout-body">
+            <div class="callout-title">O Famoso "Efeito Esquilo" (Chipmunk Effect) — Por que acontece?</div>
+            <p>Quando você acelera um áudio ou sobe o pitch em editores comuns, tanto o pitch quanto os formantes sobem juntos. O resultado é aquela voz artificial de esquilo de desenho animado. O <strong>Nexo Download</strong> resolve isso porque permite alterar o <strong>Pitch</strong> e os <strong>Formantes</strong> de forma <strong>independente</strong>!</p>
+        </div>
+    </div>
+
+    <h2>4.2 Qual Motor Escolher no Nexo?</h2>
+    <div class="preset-grid">
+        <div class="preset-card">
+            <div class="preset-name">⚡ Motor 1: DSP Tradicional</div>
+            <p class="preset-desc">
+                <strong>Quando usar:</strong> Para correções rápidas, voz de locutor de rádio, voz anônima para podcasts/vídeos, limpeza de ruídos de fundo e efeitos criativos imediatos.<br>
+                <strong>Vantagem:</strong> Ultrarrápido (processa em segundos na CPU).
+            </p>
+        </div>
+
+        <div class="preset-card">
+            <div class="preset-name">🧠 Motor 2: RVC IA Neural</div>
+            <p class="preset-desc">
+                <strong>Quando usar:</strong> Quando você quer que uma voz soe exatamente como <strong>outra pessoa real</strong> (com o timbre, inflexão e harmônicos idênticos).<br>
+                <strong>Vantagem:</strong> Hiper-realismo vocal através de redes neurais profundas.
+            </p>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- CAPÍTULO 5 -->
+    <!-- ================================================================= -->
+    <div class="page-break"></div>
+    <div class="page-header">
+        <span class="page-header-brand">Nexo Download Pro • Manual Oficial</span>
+        <span>Capítulo 5 • Motor 1 (DSP Clássico)</span>
+    </div>
+
+    <h1><span class="chap-num">5</span> Motor 1 (DSP Tradicional): Formantes, Pitch e Denoise</h1>
+
+    <p>O <strong>Motor 1</strong> baseia-se em algoritmos matemáticos de processamento de sinal digital (STFT - <em>Short-Time Fourier Transform</em>). Ele não requer modelos de IA pesados e funciona com velocidade instantânea em qualquer computador.</p>
+
+    <h2>5.1 Controles e Parâmetros Explicados</h2>
+    <div class="steps-container">
+        <div class="step-card">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <div class="step-title">Pitch Shift (-12 a +12 semitons)</div>
+                <p class="step-text">
+                    Controla a altura musical da voz. 12 semitons correspondem a uma oitava inteira.<br>
+                    • <strong>Valores Negativos (-1 a -6):</strong> Deixa a voz mais encorpada, aveludada e masculina.<br>
+                    • <strong>Valores Positivos (+1 a +6):</strong> Deixa a voz mais jovem, feminina ou enérgica.
+                </p>
+            </div>
+        </div>
+
+        <div class="step-card">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <div class="step-title">Formant Shift (-12 a +12 semitons) — O Segredo da Naturalidade</div>
+                <p class="step-text">
+                    Modifica a percepção da cavidade vocal sem alterar a afinação musical das notas.<br>
+                    • Se você baixou o pitch para -3, experimente deixar os formantes em <strong>-1 ou -2</strong> para simular uma caixa torácica maior (voz imponente de locutor).<br>
+                    • Se você subir o pitch mas não quiser voz de criança, mantenha os formantes em 0.
+                </p>
+            </div>
+        </div>
+
+        <div class="step-card">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <div class="step-title">Redução de Ruído (Denoise de 0 a 100%)</div>
+                <p class="step-text">
+                    Filtro espectral adaptativo que localiza ruídos estacionários (cooler de computador, ar-condicionado, chiado elétrico do microfone) e remove da gravação sem abafar a voz. Recomendado entre <strong>25% e 45%</strong>.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <h2>5.2 Catálogo de Presets Prontos</h2>
+    <div class="preset-grid">
+        <div class="preset-card">
+            <div class="preset-name">🎙️ Voz Profunda (Podcast / Locutor)</div>
+            <p class="preset-desc">Pitch: -2.5 | Formante: -2.0 | Denoise: 30%<br>Ideal para narrações do YouTube, tutoriais e vídeos informativos que exigem autoridade e presença.</p>
+        </div>
+
+        <div class="preset-card">
+            <div class="preset-name">🐿️ Efeito Hélio / Esquilo Divertido</div>
+            <p class="preset-desc">Pitch: +7.0 | Formante: +6.0 | Denoise: 10%<br>Voz cômica clássica para canais de entretenimento e esquetes.</p>
+        </div>
+
+        <div class="preset-card">
+            <div class="preset-name">👹 Titã / Monstro Cinematográfico</div>
+            <p class="preset-desc">Pitch: -7.0 | Formante: -6.0 | Denoise: 35%<br>Grave cavernoso com ressonância profunda para vilões e narrações épicas.</p>
+        </div>
+
+        <div class="preset-card">
+            <div class="preset-name">📻 Rádio Vintage / AM</div>
+            <p class="preset-desc">Pitch: 0.0 | Formante: +1.0 | Passa-Faixa: Médios<br>Simula transmissão clássica de rádio analógica dos anos 60/70.</p>
+        </div>
+
+        <div class="preset-card">
+            <div class="preset-name">📞 Telefone Antigo</div>
+            <p class="preset-desc">Pitch: +0.5 | Formante: +1.5 | Corte estreito de graves e agudos<br>Perfeito para simular diálogos telefônicos em produções audiovisuais.</p>
+        </div>
+
+        <div class="preset-card">
+            <div class="preset-name">✨ Limpeza & Clareza Vocal</div>
+            <p class="preset-desc">Pitch: 0.0 | Formante: 0.0 | Denoise: 40%<br>Mantém o timbre original intacto, limpando chiados e aumentando a nitidez.</p>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- CAPÍTULO 6 -->
+    <!-- ================================================================= -->
+    <div class="page-break"></div>
+    <div class="page-header">
+        <span class="page-header-brand">Nexo Download Pro • Manual Oficial</span>
+        <span>Capítulo 6 • Motor 2 (RVC IA Neural)</span>
+    </div>
+
+    <h1><span class="chap-num">6</span> Motor 2 (RVC IA Neural): Conversão de Timbre Realista</h1>
+
+    <p>O <strong>RVC (Retrieval-based Voice Conversion v2)</strong> é o estado da arte mundial em inteligência artificial para conversão vocal. Ele não apenas aplica filtros no áudio; ele <strong>recria</strong> a fala na voz aprendida pelo modelo neural.</p>
+
+    <h2>6.1 Os Componentes de um Modelo RVC</h2>
+    <ul>
+        <li><strong>Arquivo <code>.pth</code>:</strong> É o "cérebro" treinado da voz. Contém a rede neural profunda que mapeia os fonemas e características harmônicas do locutor alvo.</li>
+        <li><strong>Arquivo <code>.index</code> (FAISS):</strong> É o índice vetorial de busca por similaridade. Ele armazena as nuances mais sutis da voz para garantir que ela soe 100% fiel e sem sotaque robótico.</li>
+    </ul>
+
+    <h2>6.2 O Algoritmo de Extração de Pitch: RMVPE</h2>
+    <p>O Nexo Download utiliza o <strong>RMVPE</strong> (<em>Robust Model for Vocal Pitch Estimation</em>). Diferente de métodos antigos como PM ou Harvest, o RMVPE é imune a falhas em sussurros, notas agudas e consoantes ásperas, eliminando completamente falhas de voz e quebras de afinação.</p>
+
+    <h2>6.3 Passo a Passo da Conversão com IA</h2>
+    <div class="steps-container">
+        <div class="step-card">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <div class="step-title">Insira os Modelos na Pasta</div>
+                <p class="step-text">Clique no botão <strong>"📂 Abrir Pasta de Modelos"</strong> no aplicativo. A pasta <code>audio_engine/modelos</code> se abrirá no Windows Explorer. Basta colar seus arquivos <code>.pth</code> e <code>.index</code> lá dentro.</p>
+            </div>
+        </div>
+
+        <div class="step-card">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <div class="step-title">Selecione o Modelo no Aplicativo</div>
+                <p class="step-text">Clique em <strong>"Atualizar Lista"</strong> no painel. O seu modelo aparecerá na caixa de seleção.</p>
+            </div>
+        </div>
+
+        <div class="step-card">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <div class="step-title">Ajuste a Transposição de Tom (Pitch Semitons)</div>
+                <p class="step-text">
+                    • <strong>Homem para Homem:</strong> Mantenha em <code>0</code>.<br>
+                    • <strong>Homem para Mulher:</strong> Suba para <code>+12</code> (uma oitava acima).<br>
+                    • <strong>Mulher para Homem:</strong> Desça para <code>-12</code> (uma oitava abaixo).<br>
+                    • <strong>Mulher para Mulher:</strong> Mantenha em <code>0</code>.
+                </p>
+            </div>
+        </div>
+
+        <div class="step-card">
+            <div class="step-number">4</div>
+            <div class="step-content">
+                <div class="step-title">Configurações Avançadas de Qualidade</div>
+                <p class="step-text">
+                    • <strong>Força do Índice FAISS (Index Rate):</strong> Recomendado entre <code>0.60 e 0.85</code>. Se colocar 1.0, a fidelidade é máxima, mas pode puxar ruídos do áudio original.<br>
+                    • <strong>Proteção de Consoantes (Protect):</strong> Deixe em <code>0.33</code>. Isso impede que as letras "S", "P", "T" e sons de respiração soem metalizados.
+                </p>
+            </div>
+        </div>
+
+        <div class="step-card">
+            <div class="step-number">5</div>
+            <div class="step-content">
+                <div class="step-title">Processar e Ouvir</div>
+                <p class="step-text">Clique em <strong>"Converter Voz com RVC IA"</strong>. O player integrado carregará o áudio resultante com forma de onda, pronto para download ou execução imediata.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- CAPÍTULO 7 -->
+    <!-- ================================================================= -->
+    <div class="page-break"></div>
+    <div class="page-header">
+        <span class="page-header-brand">Nexo Download Pro • Manual Oficial</span>
+        <span>Capítulo 7 • Treinamento com Applio</span>
+    </div>
+
+    <h1><span class="chap-num">7</span> Treinamento de Novas Vozes (Applio Engine Integrado)</h1>
+
+    <p>O Nexo Download inclui internamente o motor de treinamento baseado no projeto de código aberto <strong>Applio</strong>. Com ele, você pode clonar qualquer voz a partir de amostras de áudio limpas.</p>
+
+    <h2>7.1 Como Preparar um Dataset de Gravação Perfeito</h2>
+    <p>A qualidade de qualquer modelo de IA depende diretamente da qualidade do material que você fornece a ele. Siga as regras de ouro:</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Critério</th>
+                <th>Recomendação Ideal</th>
+                <th>O que evitar a todo custo</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Duração Total</strong></td>
+                <td>Entre 5 e 15 minutos de fala contínua</td>
+                <td>Menos de 2 minutos (voz fica sem flexibilidade)</td>
+            </tr>
+            <tr>
+                <td><strong>Ambiente Acústico</strong></td>
+                <td>Quarto silencioso sem eco / reverberação</td>
+                <td>Salas vazias com eco, ruído de trânsito ou teclado</td>
+            </tr>
+            <tr>
+                <td><strong>Música de Fundo</strong></td>
+                <td>Voz 100% isolada (Acapella pura)</td>
+                <td>Qualquer trilha sonora (a IA tentará cantar junto)</td>
+            </tr>
+            <tr>
+                <td><strong>Formato do Arquivo</strong></td>
+                <td>WAV ou FLAC a 44.1kHz ou 48kHz (16/24 bits)</td>
+                <td>Áudios gravados no WhatsApp comprimidos</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>7.2 O Fluxo de Treinamento Passo a Passo</h2>
+    <div class="steps-container">
+        <div class="step-card">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <div class="step-title">Coloque os áudios em uma pasta</div>
+                <p class="step-text">Crie uma pasta no seu computador e coloque seus arquivos de áudio gravados nela.</p>
+            </div>
+        </div>
+
+        <div class="step-card">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <div class="step-title">Acesse a aba "Treinar Voz" no Nexo</div>
+                <p class="step-text">Dê um nome para o seu modelo (ex: <code>meu_locutor</code>) e clique em <strong>"Selecionar Pasta do Dataset"</strong>.</p>
+            </div>
+        </div>
+
+        <div class="step-card">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <div class="step-title">Configure as Épocas (Epochs)</div>
+                <p class="step-text">
+                    • <strong>100 a 150 Épocas:</strong> Ideal para testes rápidos ou se você estiver usando processador (CPU).<br>
+                    • <strong>200 a 300 Épocas:</strong> Qualidade profissional definitiva (recomendado para placas NVIDIA RTX).
+                </p>
+            </div>
+        </div>
+
+        <div class="step-card">
+            <div class="step-number">4</div>
+            <div class="step-content">
+                <div class="step-title">Inicie o Treinador</div>
+                <p class="step-text">Clique em <strong>"Iniciar Treinamento Autônomo"</strong>. O Nexo executará o pré-processamento, corte de silêncio, extração de pitch RMVPE e compilará o <code>.pth</code> e o <code>.index</code> automaticamente na pasta de modelos.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- CAPÍTULO 8 -->
+    <!-- ================================================================= -->
+    <div class="page-break"></div>
+    <div class="page-header">
+        <span class="page-header-brand">Nexo Download Pro • Manual Oficial</span>
+        <span>Capítulo 8 • Diagnóstico e FAQ</span>
+    </div>
+
+    <h1><span class="chap-num">8</span> Dicas de Ouro, Solução de Problemas & FAQ</h1>
+
+    <h2>8.1 Tabela de Diagnóstico Rápido</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Sintoma Observado</th>
+                <th>Causa Provável</th>
+                <th>Solução Recomendada</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>A voz resultante no RVC soa metalizada ou robótica.</td>
+                <td>Index Rate muito baixo ou Protect muito baixo.</td>
+                <td>Aumente a <strong>Força do Índice</strong> para 0.75 e suba o <strong>Protect</strong> para 0.35 ou 0.40.</td>
+            </tr>
+            <tr>
+                <td>O tom da voz ficou muito agudo ou desafinado.</td>
+                <td>Transposição de semitons incorreta para o gênero.</td>
+                <td>Se estiver convertendo homem para mulher, utilize exatamente <code>+12</code> semitons. Se for mesmo gênero, use <code>0</code>.</td>
+            </tr>
+            <tr>
+                <td>O processo no RVC demora muito tempo para concluir.</td>
+                <td>O computador está utilizando a CPU em vez de placa de vídeo.</td>
+                <td>Computadores sem placa de vídeo NVIDIA utilizam CPU. Para maior velocidade, processe áudios em trechos menores (1 a 3 minutos).</td>
+            </tr>
+            <tr>
+                <td>Aparece a mensagem "Nenhum modelo .pth encontrado".</td>
+                <td>A pasta de modelos está vazia.</td>
+                <td>Clique em <strong>"Abrir Pasta de Modelos"</strong> e coloque o arquivo <code>.pth</code> na pasta <code>audio_engine/modelos</code>.</td>
+            </tr>
+            <tr>
+                <td>O áudio baixado do YouTube veio sem vídeo.</td>
+                <td>O modo selecionado na aba foi "Apenas Áudio".</td>
+                <td>Alterne a chave seletora para o modo <strong>"Vídeo"</strong> antes de iniciar o download.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>8.2 Dicas de Ouro dos Engenheiros de Áudio</h2>
+    <ul>
+        <li><strong>Fale próximo ao microfone:</strong> A melhor pós-produção nunca corrige uma gravação cheia de eco ou gravada longe do microfone. Mantenha 10 a 15 cm de distância com filtro anti-pop.</li>
+        <li><strong>Faça um Denoise leve antes do RVC:</strong> Se sua gravação original tiver muito chiado, use primeiro o <strong>Motor 1</strong> com 30% de Denoise para limpar o áudio, e só depois envie para o <strong>Motor 2 (RVC)</strong>.</li>
+        <li><strong>Preservação de Arquivos Originais:</strong> O Nexo Download nunca sobrescreve seu arquivo original; todas as modificações são gravadas em novos arquivos com sufixos identificadores (ex: <code>_dsp_processado.wav</code>, <code>_rvc_processado.wav</code>).</li>
+    </ul>
+
+    <div class="callout callout-info" style="margin-top: 20px;">
+        <div class="callout-icon">🛡️</div>
+        <div class="callout-body">
+            <div class="callout-title">Garantia de Privacidade & Soberania Digital</div>
+            <p>Todo o processamento do Nexo Download Pro ocorre <strong>100% localmente</strong> na sua própria máquina. Nenhum dado de áudio, voz ou vídeo é enviado para servidores externos ou nuvens de terceiros. Seus dados e sua identidade permanecem sob seu controle absoluto.</p>
+        </div>
+    </div>
+
+    <div class="page-footer">
+        <span>© 2026 Nexo Digital • Todos os direitos reservados</span>
+        <span>Manual do Usuário • Versão 2.2.0 Pro</span>
+    </div>
+
+</body>
+</html>

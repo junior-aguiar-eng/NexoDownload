@@ -16,7 +16,7 @@ import threading
 from pathlib import Path
 from typing import Dict, Any, Optional
 
-CURRENT_VERSION = "2.1.0"
+CURRENT_VERSION = "2.2.0"
 GITHUB_VERSION_URL = "https://raw.githubusercontent.com/junior-aguiar-eng/NexoDownload/main/version.json"
 
 def get_current_version() -> str:
@@ -85,6 +85,7 @@ def check_for_updates(remote_url: str = GITHUB_VERSION_URL) -> Dict[str, Any]:
                 
                 # Validação de segurança na URL de download fornecida pelo manifesto
                 safe_download_url = raw_download_url if is_trusted_update_url(raw_download_url) else ""
+                raw_sha256 = str(data.get("sha256", "")).strip().lower()
                 
                 is_newer = _parse_version(latest_ver) > _parse_version(CURRENT_VERSION)
                 changelog_items = data.get("changelog", [])
@@ -100,6 +101,7 @@ def check_for_updates(remote_url: str = GITHUB_VERSION_URL) -> Dict[str, Any]:
                     "title": data.get("title", f"Nexo Download v{latest_ver}"),
                     "changelog": changelog_text,
                     "download_url": safe_download_url,
+                    "sha256": raw_sha256,
                     "release_date": data.get("release_date", "")
                 }
     except Exception:
@@ -110,13 +112,14 @@ def check_for_updates(remote_url: str = GITHUB_VERSION_URL) -> Dict[str, Any]:
         "current_version": CURRENT_VERSION,
         "latest_version": CURRENT_VERSION,
         "changelog": "",
-        "download_url": ""
+        "download_url": "",
+        "sha256": ""
     }
 
-def apply_silent_update(download_url: str, progress_callback=None) -> bool:
+def apply_silent_update(download_url: str, expected_sha256: Optional[str] = None, progress_callback=None) -> bool:
     """
     Baixa o novo instalador em %TEMP% e o executa com a flag /S (silenciosa).
-    Garante validação estrita de domínio antes do download e validação do cabeçalho PE.
+    Garante validação estrita de domínio antes do download, validação de integridade SHA-256 e validação do cabeçalho PE.
     """
     if not download_url or not is_trusted_update_url(download_url):
         print(f"[Updater] URL de atualização rejeitada por política de segurança: {download_url}")
@@ -154,6 +157,19 @@ def apply_silent_update(download_url: str, progress_callback=None) -> bool:
                         progress_callback(pct)
 
         if installer_path.exists() and installer_path.stat().st_size > 1024 * 1024:
+            # Validação criptográfica de integridade SHA-256 (se fornecido)
+            if expected_sha256:
+                import hashlib
+                hasher = hashlib.sha256()
+                with open(installer_path, "rb") as f_hash:
+                    while chunk := f_hash.read(65536):
+                        hasher.update(chunk)
+                computed_hash = hasher.hexdigest().lower()
+                if computed_hash != expected_sha256.strip().lower():
+                    print(f"[Updater] Hash SHA-256 inválido! Esperado: {expected_sha256}, Obtido: {computed_hash}")
+                    installer_path.unlink(missing_ok=True)
+                    return False
+
             # Validação básica de integridade do executável Windows (assinatura MZ no header PE)
             with open(installer_path, "rb") as f_check:
                 header = f_check.read(2)

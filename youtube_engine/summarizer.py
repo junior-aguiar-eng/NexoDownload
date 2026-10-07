@@ -98,16 +98,20 @@ TRANSCRIÇÃO:
         resp = requests.post(url, json=payload, timeout=45)
         if resp.status_code == 200:
             data = resp.json()
-            generated_text = data["candidates"][0]["content"]["parts"][0]["text"]
-            
-            # Extração simples de seções
-            return SummaryReport(
-                executive_summary=generated_text,
-                key_takeaways=[],
-                chapters_breakdown=[],
-                full_markdown=generated_text,
-                engine_used=f"google-gemini ({model})"
-            )
+            candidates = data.get("candidates") or []
+            if candidates:
+                content = candidates[0].get("content") or {}
+                parts = content.get("parts") or []
+                if parts and "text" in parts[0]:
+                    generated_text = parts[0]["text"]
+                    return SummaryReport(
+                        executive_summary=generated_text,
+                        key_takeaways=[],
+                        chapters_breakdown=[],
+                        full_markdown=generated_text,
+                        engine_used=f"google-gemini ({model})"
+                    )
+            raise RuntimeError("Gemini não retornou texto gerado (possível filtro de segurança ou resposta vazia).")
         else:
             raise RuntimeError(f"Erro na API do Gemini: {resp.status_code} - {resp.text}")
 

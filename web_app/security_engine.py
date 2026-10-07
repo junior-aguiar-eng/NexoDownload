@@ -103,6 +103,17 @@ def _get_machine_fingerprints() -> list:
     if guid:
         fps.append(_compute_hwid_from_raw(guid))
 
+    # 4. Fallback de hardware local determinístico (MAC/UUID e hostname)
+    try:
+        import uuid as _uuid
+        import platform as _platform
+        mac_node = hex(_uuid.getnode())[2:].upper()
+        node_name = _platform.node() or "NEXO_NODE"
+        raw_hw_fallback = f"{node_name}|{mac_node}"
+        fps.append(_compute_hwid_from_raw(raw_hw_fallback))
+    except Exception:
+        pass
+
     if not fps:
         fallback = os.environ.get("COMPUTERNAME", "NEXO_GENERIC_HOST")
         fps.append(_compute_hwid_from_raw(fallback))

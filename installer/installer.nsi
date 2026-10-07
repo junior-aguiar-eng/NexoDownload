@@ -11,7 +11,7 @@ Unicode true
 !define PRODUCT_NAME "Nexo Download"
 !define PRODUCT_SUBTITLE "Mídia Digital Livre"
 !define PRODUCT_PUBLISHER "Nexo Digital"
-!define PRODUCT_VERSION "2.1.0"
+!define PRODUCT_VERSION "2.2.0"
 !define PRODUCT_EXE "NexoDownload.exe"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\NexoDownload"
 
